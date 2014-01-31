@@ -6,7 +6,7 @@ TARGET = main
 OPTIONS = -DF_CPU=48000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 
 # options needed by many Arduino libraries to configure for Teensy 3.0
-OPTIONS += -D__MK20DX128__ -DARDUIO=104
+OPTIONS += -D__MK20DX256__ -DARDUIO=104
 
 
 #************************************************************************
@@ -36,7 +36,7 @@ CXXFLAGS = -std=gnu++0x -felide-constructors -fno-exceptions -fno-rtti
 CFLAGS =
 
 # linker options
-LDFLAGS = -Os -Wl,--gc-sections -mcpu=cortex-m4 -mthumb -Tmk20dx128.ld
+LDFLAGS = -Os -Wl,--gc-sections -mcpu=cortex-m4 -mthumb -Tmk20dx256.ld
 
 # additional libraries to link
 LIBS = -lm
