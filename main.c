@@ -1,27 +1,29 @@
-/*This is the main file of the Teensy.*/
+#include "mk20dx128.h"
+#include "core_pins.h"
+#include "usb_serial.h"
 
-#include "./teensy3/mk20dx128.h"
-#include "./teensy3/HardwareSerial.h"	//arduino style c functions to use serial
-#include "./teensy3/util/delay.h"	//mapping from avr style delay to 
-#include "./teensy3/core_pins.h"
-#include "./teensy3/avr_emulation.h"
-#include "./teensy3/arm_math.h"
 
-int main(void){
-/*simple Hello World by flipping a pin (and turning on and off an led)*/
-//Setup pin PORTC.5 pin
-//Individual pin configuration
-PORTC_PCR5 |= 0x00000100;
+void TestPrint(char* S){
+	while(*S){
+		usb_serial_putchar(*S++);
+	}
+}
 
-//GPIO Direction Register
-GPIOC_PDDR = 0x00000200;
+int main(void)
+{
+
+pinMode(LED_BUILTIN, OUTPUT);
 
 while(1){
-	//Toggle pin C5
-	GPIOC_PTOR = 0x00000020;
-	delay(200);
-	GPIOC_PTOR = 0x00000020;
-	delay(500);
+digitalWriteFast(LED_BUILTIN, HIGH);
+delay(30);
+digitalWriteFast(LED_BUILTIN, LOW);
+delay(3000);
+
+TestPrint("This is a test! Hi World!\n\r");
+}
+
+return(0);
 
 }
-}//End Main
+

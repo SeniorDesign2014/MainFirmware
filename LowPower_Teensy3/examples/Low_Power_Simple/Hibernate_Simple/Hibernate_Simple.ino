@@ -1,0 +1,57 @@
+/**********************************************************  
+ *  Puts the processor into Very Low Leakage Stop (VLLS3) 
+ *  mode aka... Hibernate. All I/O is held in a pre 
+ *  Hibernate state and USB is disabled. Once Hibernate 
+ *  mode is entered any automatic programing will not work,
+ *  this requires you to use the reset button to program. 
+ *  Exiting from Hibernate will be through reset flow. 
+ *
+ *  This example shows using the digital pin 22 as a wakeup 
+ *  source for the Teensy3.
+ *
+ *  Tested and compiled under Arduino 1.0.5 and 
+ *  Teensyduino 1.16rc1.    
+ *********************************************************/
+#include <LowPower_Teensy3.h>
+
+uint8_t LEDPIN = 13;
+
+TEENSY3_LP LP = TEENSY3_LP();
+
+void setup() {
+  pinMode(22, INPUT_PULLUP);
+  pinMode(LEDPIN, OUTPUT);
+  Serial.begin(0);
+  blink();
+  while(!Serial.dtr());
+  delay(1000);
+  Serial.print("\nHibernate Simple\n\n");
+  
+  /*****************************************************
+   * Print the reset source and current power mode
+   *****************************************************/
+  LP.PrintSRS();
+  delay(20);
+  
+  /*****************************************************
+   * Set digital pin 22 as wakeup source and then enter 
+   * Hibernate sleep mode. Exiting Hibernate is through 
+   * a reset so code will not excute after Hibernate.
+   * Reopen the serial monitor after waking Teensy. 
+   *****************************************************/
+  pinMode(22, INPUT_PULLUP);
+  LP.Hibernate(GPIO_WAKE, PIN_22);
+}
+
+void loop() {
+  blink();// Notice, this never gets excuted.
+}
+
+void blink() {
+  digitalWrite(LEDPIN, !digitalRead(LEDPIN));
+  delay(100);
+  digitalWrite(LEDPIN, !digitalRead(LEDPIN));
+  delay(100);
+}
+
+
