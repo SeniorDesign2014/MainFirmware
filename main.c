@@ -18,6 +18,43 @@ void USBPrint(char* s){
 	}
 }
 
+uint8_t gsm_verify_response(char *received, char *cmd)
+{
+	/* 
+		Returns 1 for success, 0 for failure.
+		
+		The following responses are expected: 
+		OK
+		#MWI: 1,1
+	*/
+	
+	// The first two chars of the response are \r\n, so they are skipped
+	return (
+		(received[2] == 'O' && 
+			received [3] == 'K') // "OK" - Generic success message
+		||
+		(received[2] == '#' && 
+			received[3] == 'M' &&
+			received[4] == 'W' &&
+			received[5] == 'I' &&
+			received[6] == ':' &&
+			received[7] == ' ') // "#MWI: " - Initial boot status
+		||
+		(received [2] == '>' &&
+			received [3] == ' ') // "> " - SMS prompt
+		||
+		(received[2] == '+' && 
+			received[3] == 'C' &&
+			received[4] == 'M' &&
+			received[5] == 'G' &&
+			received[6] == 'S' &&
+			received[7] == ':' &&
+			received[8] == ' ' &&
+			received[9] == '1' &&
+			received[10] == '0') // "+CMGS: 10" - Successful SMS transmission
+		);
+}
+
 /*
 	gsm_write
 
@@ -53,6 +90,7 @@ uint8_t gsm_write(char *cmd, int len)
 		Time-out if it takes more than COMMAND_TIMEOUT seconds.
 	*/
 	serial_write(cmd, len);	// Write the command to the GSM module
+	serial_flush();
 	timeout_seconds = COMMAND_TIMEOUT;
 	while (!serial_available() && timeout_seconds > 0) {
 		delay(1000);//DEBUG
@@ -67,6 +105,8 @@ uint8_t gsm_write(char *cmd, int len)
 	
 	/*
 		Get response from serial buffer
+	
+		The first two characters will likely be \r\n!
 	*/
 	character_counter = 0;
 	while (serial_available() && character_counter < RECEIVE_LIMIT) {
@@ -78,10 +118,11 @@ uint8_t gsm_write(char *cmd, int len)
 	/*
 		Parse for "OK" which is the module's success message
 	*/
-	if (received[0] != 'O' || received [1] != 'K') {
+	if (!gsm_verify_response(received, cmd_clean)){
 		// Unexpected response
 		snprintf(print_status, RECEIVE_LIMIT + len - 1 + 37, "Unexpected response for command %s: %s\r\n", cmd_clean, received);
 		USBPrint(print_status);
+		serial_clear();
 		return 0;
 	}
 	
@@ -90,18 +131,26 @@ uint8_t gsm_write(char *cmd, int len)
 	*/
 	snprintf(print_status, RECEIVE_LIMIT + len - 1 + 26, "Response for command %s: %s\r\n", cmd_clean, received);
 	USBPrint(print_status);
+	serial_clear();
 	return 1;
 }
 
 uint8_t gsm_init(void)
 {
+	// Wait for GSM module to initialize
+	delay(1000);
 	// Write several noop commands
 	serial_write("AT\r\n", 4);
-	delay(250);
+	delay(500);
 	serial_write("AT\r\n", 4);
-	delay(250);
+	delay(500);
 	serial_write("AT\r\n", 4);
-	delay(250);
+	delay(500);
+	serial_write("AT\r\n", 4);
+	// Disable command echoing
+	serial_write("ATE0\r\n", 6);
+	serial_flush();
+	delay(3000);
 	// Write one more noop; we are expecting to receive "OK"
 	return gsm_write("AT\r\n", 4);
 }
@@ -109,27 +158,31 @@ uint8_t gsm_init(void)
 int main(void)
 {
 	int success;
-
+	
 	pinMode(LED_BUILTIN, OUTPUT);
-
+	
 	// Initialize serial
 	serial_begin(BAUD2DIV(115200));
 	serial_format(SERIAL_8N1);
-
+	
 	// Initialize GSM module
-	//gsm_init();
+	//delay(5000);
+	success = gsm_init();
+	//gsm_write("AT+CMEE=2\r\n", 11);
+	success = 	gsm_write("AT+CMGF=1\r\n", 11);
 	
 	// Send set-up commands
-
+	
 	while(1){
 		digitalWriteFast(LED_BUILTIN, HIGH);
 		delay(500);
 		digitalWriteFast(LED_BUILTIN, LOW);
 		delay(500);
-
-		success = gsm_init();
-		delay(1500);
+		
+		//success = gsm_init();
+		if (success)
+			USBPrint("Init succeeded");
 	}
-
+	
 	return(0);
 }
