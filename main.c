@@ -49,9 +49,7 @@ uint8_t gsm_verify_response(char *received, char *cmd)
 			received[5] == 'G' &&
 			received[6] == 'S' &&
 			received[7] == ':' &&
-			received[8] == ' ' &&
-			received[9] == '1' &&
-			received[10] == '0') // "+CMGS: 10" - Successful SMS transmission
+			received[8] == ' ') // "+CMGS: ##" - Successful SMS transmission (## is the text number)
 		);
 }
 
@@ -169,9 +167,12 @@ int main(void)
 	//delay(5000);
 	success = gsm_init();
 	//gsm_write("AT+CMEE=2\r\n", 11);
-	success = 	gsm_write("AT+CMGF=1\r\n", 11);
-	
-	// Send set-up commands
+	if (success)
+		success = gsm_write("AT+CMGF=1\r\n", 11);
+	if (success)
+		success = gsm_write("AT+CMGS=\"phone_number_here\"\r\n", 23);
+	if (success)
+		success = gsm_write("Sent from the Teensy\x1a", 21);
 	
 	while(1){
 		digitalWriteFast(LED_BUILTIN, HIGH);
