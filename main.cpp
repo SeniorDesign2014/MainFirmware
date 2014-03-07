@@ -1,4 +1,10 @@
+/**********************************
+main.cpp
+Created: 03/06/2014
+Authors: Paul Burris, Nick Voigt, Russell Barnes
 
+This is the integrated file.
+**********************************/
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
@@ -7,24 +13,9 @@
 #include "usb_serial.h"
 #include "bluetooth.h"
 #include "HardwareSerial.h"
+#include "MPU6050.h"
 //this is a common header for functions used in several c files (ex. simpleprint())
 #include "common.h"		
-#include "MPU6050.h"
-
-//i2c variables TODO: make these constants
-uint8_t target = 0x68;
-uint8_t who_am_i = 0x75;
-
-//bluetooth variables  TODO: move these to header
-extern int bt_write_flag;
-extern int bt_whitelist_flag;
-extern int bt_set_mode_flag;
-extern int bt_connected_flag;
-extern int bt_armed;
-extern int bt_sound;
-extern int bt_sound_select;
-extern int bt_sound_delay;
-extern int bt_new_data;
 
 //state varaibales
 int state = 0;
@@ -34,25 +25,18 @@ char secret = '0';
 char sound = '0';
 char sound_sel = '0';
 char sound_delay = '0';
+enum states {
+	STATE_DISARMING,
+	STATE_DISARMED,
+	STATE_ARMING,
+	STATE_ARMED,
+	STATE_ALARMING,
+	STATE_ALARMED
+}
 
-//varaibles to debug with over serial (115200 baud)
+//varaibles to use usb serial debugging (115200 baud)
 char debug_command = 0;
 char debug_output[255];
-
-//TODO: remove this
-/* DECIDED TO GO WITH SPRINTF 
-void PrettyFormatInt( int i, char* buf, int buflen ){
-  // don't forget ends:
-  ostrstream temp( buf, buflen );
-  temp << setw(4) << i << ends;
-}
-
-void PrettyFormatFloat(float i, std::string *s){
-	std::ostringstream ss;
-	ss << i;
-	*s(ss.str());
-}
-*/
 
 int main(void){
 	pinMode(LED_BUILTIN, OUTPUT);
@@ -61,84 +45,115 @@ int main(void){
 	//bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
 	
 	for(;;){
-	
-	switch(state){ //TODO: make enumeration
-	
-		case 0x00: // STATE_SLEEPING	
-			
-			//TODO: 
-			
-		break;
-		case 0x01: // STATE_SLEEP
-			
-			if(bt_new_data == 1){ //TODO: make this flag work
-				armed = bt_armed + ASCII;
-				sound = bt_sound + ASCII;
-				sound_sel = bt_sound_select + ASCII;
-				sound_delay = bt_sound_delay + ASCII;
+		switch(state){
+		
+			case STATE_DISARMING:
+				//TODO: shut down GPS
+				//TODO: shut down GSM
+				//TODO: shut down audio
+				state = STATE_DISARMED;
 				
-				bt_new_data = 0;
-			}
+			break;
+			case STATE_DISARMED:
+				//poll bluetooth every so often
+				bluetooth_update();
+				if(bt_new_data == 1){
+					armed = bt_armed + ASCII;
+					sound = bt_sound + ASCII;
+					sound_sel = bt_sound_select + ASCII;
+					sound_delay = bt_sound_delay + ASCII;
+					
+					bt_new_data = 0;
+				}
+				if(armed == '1'){state = STATE_ARMING;}
+				
+				//TODO: sleep
+			break;
 			
-		break;
-		
-		case 0x10: // STATE_ARMING
-			//TODO: get GPS lock
-			//TODO: sleep GPS
+			case STATE_ARMING:
+				//TODO: GPS init
+				//TODO: motion init
+				state = STATE_ARMED;
+			break;
 			
-			//TODO: state = STATE_ARMED;
-			
-		break;
-		
-		case: 0x11: //STATE_ARMED
-		
-			//poll the motion sensor
-			if(alarmed == '0'){
+			case STATE_ARMED:
+				//TODO: ADD poll GPS until lock has been established
+				/*
+				if(gps_lock != true){
+					update_gps();
+					if(gps_lock == true){
+						sleep GPS;
+					}
+				}
+				*/
+				
+				//TODO: timer (with int)
+				
+				//poll the motion sensor every .5 s
 				alarmed = motion_update();
-				//TODO: state = STATE_ALARMED;
-			}
-			
-			//TODO: check for disarm message
-			//TODO: state = STATE_SLEEPING	
+				if(alarmed == '1'){
+					state = STATE_ALARMING;
+				}
 				
+				//poll bluetooth every so often
+				bluetooth_update();
+				if(bt_new_data == 1){
+					armed = bt_armed + ASCII;
+					sound = bt_sound + ASCII;
+					sound_sel = bt_sound_select + ASCII;
+					sound_delay = bt_sound_delay + ASCII;
+					
+					bt_new_data = 0;
+				}
+				if(armed == '0'){state = STATE_DISARMING;}
+			break;
 			
-		break;
+			case STATE_ALARMING:
+				//TODO: GSM init
+				//TODO: wake up GPS
+				//TODO: fire up GSM
+				
+				state = STATE_ALARMED;
+				
+			break;
+			
+			case STATE_ALARMED:
+				simplePrint("FREAKOUT! I'M BEING STOLEN!\n");
+				
+				//TODO: get GPS data
+				//gps_parse();
+				//TODO: send GSM data 
+				
+				//poll bluetooth for disarm message
+				bluetooth_update();
+				if(bt_new_data == 1){
+					armed = bt_armed + ASCII;
+					sound = bt_sound + ASCII;
+					sound_sel = bt_sound_select + ASCII;
+					sound_delay = bt_sound_delay + ASCII;
+					
+					bt_new_data = 0;
+				}
+				if(armed == '0'){state = STATE_DISARMING;}
+				
+			break;
+			
+			default:
+				simplePrint("ERROR - INCORRECT STATE\n");
+		}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 		
-		case 0x20; //STATE_ALARMING
-			
-			//TODO: fire up GPS
-			//TODO: fire up GSM
-			
-			//TODO: check for disarm message
-			//TODO: state = STATE_SLEEPING
-			
-		break;
-		
-		case 0x21; //STATE_ALARMED
-			simplePrint("FREAKOUT! I'M BEING STOLEN!\n");
-			
-			//TODO: get GPS data
-			//TODO: send GSM data
-			
-			//TODO: check for disarm message
-			//TODO: state = STATE_SLEEPING
-			
-		break;
-		
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	//THIS IS MY MANUAL DEBUG CODE
 		if(usb_serial_available()){

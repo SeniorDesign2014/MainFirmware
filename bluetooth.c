@@ -12,15 +12,15 @@ Author: Paul Burris
 
 //#define USB_DEBUG
 
-int bt_write_flag = -1;
-int bt_whitelist_flag = -1;
-int bt_set_mode_flag = -1;
+int bt_write_flag = 0;
+int bt_whitelist_flag = 0;
+int bt_set_mode_flag = 0;
 int bt_connected_flag = 0;
 int bt_armed = 0;
 int bt_sound = 0;
 int bt_sound_select = 0;
 int bt_sound_delay = 0;
-int bt_new_data = 0; //TODO: use this 
+int bt_new_data = 0; 
 
 char bt_serial_out[BT_WRITE_BUF_SIZE] = 
 	{0x0D, 0x00, 0x09, 0x02, 0x00, 0x14, 0x00, 0x00, 0x05, 0x30, 0x30, 0x30, 0x30, 0x30};
@@ -67,10 +67,10 @@ void bluetooth_whitelist_append(char* device_address, char address_type){
 	serial2_write(bt_whitelist_append, BT_WHITELIST_BUF_SIZE);
 }
 
-/* 
+/**********************************************************
 This function checks for the response of the Bluetooth moodule 
 and should be called on a regular basis
-*/
+*********************************************************/
 void bluetooth_update(){
 	char msg_type;
 	char length;
@@ -79,7 +79,6 @@ void bluetooth_update(){
 	char data[32];
 	char i = 0;
 	
-	simplePrint(".");
 	#ifdef USB_DEBUG
 	usb_serial_putchar((char)serial2_available());
 	#endif
@@ -101,7 +100,9 @@ void bluetooth_update(){
 		
 		switch(msg_type){
 			case 0x00: //response message
+				#ifdef USB_DEBUG
 				simplePrint("Response: ");
+				#endif
 				switch(class){
 					case 0x00: //system
 						switch(method){
@@ -114,7 +115,9 @@ void bluetooth_update(){
 					case 0x02: //attribute database
 						switch(method){
 							case 0x00: //write
+								#ifdef USB_DEBUG
 								simplePrint("Write\n");
+								#endif
 								if((data[0] & data[1]) == 0){bt_write_flag = 1;}
 								else{bt_write_flag = -1;}
 							break;
@@ -123,7 +126,9 @@ void bluetooth_update(){
 					case 0x06: //GAP
 						switch(method){
 							case 0x01: //set mode
+								#ifdef USB_DEBUG
 								simplePrint("Mode Set\n");
+								#endif
 								if((data[0] & data[1]) == 0){bt_set_mode_flag = 1;}
 								else{bt_set_mode_flag = -1;}
 							break;
@@ -133,12 +138,14 @@ void bluetooth_update(){
 			break;
 
 			case 0x80: //event message
+				#ifdef USB_DEBUG
 				simplePrint("Event: ");
+				#endif
 				switch(class){
 					case 0x00: //Bootup
 						switch(method){
 							case 0x00: //bootup
-							
+								//TODO: fix
 							break;
 						}
 					break;
@@ -146,7 +153,10 @@ void bluetooth_update(){
 					case 0x02: //Data
 						switch(method){
 							case 0x00: //status
-								simplePrint("New datas!\n");
+								#ifdef USB_DEBUG
+								simplePrint("New data!\n");
+								#endif
+								bt_new_data = 1;
 								bt_armed = data[8] - ASCII;
 								bt_sound = data[9] - ASCII;
 								bt_sound_select = data[10] - ASCII;
@@ -159,13 +169,17 @@ void bluetooth_update(){
 					case 0x03: //Connection
 						switch(method){
 							case 0x00: //status
+								#ifdef USB_DEBUG
 								simplePrint("Connected\n");
+								#endif
 								if(data[0] & BT_CONNECTION_COMPLETE){bt_connected_flag = 1;}
 								else{bt_connected_flag = 0;}
 							break;
 							
 							case 0x04: //disconnected
+								#ifdef USB_DEBUG
 								simplePrint("Disconnected\n");
+								#endif
 								bt_connected_flag = 0;
 							break;
 						}
@@ -174,7 +188,9 @@ void bluetooth_update(){
 			break;
 			
 			default:
+				#ifdef USB_DEBUG
 				simplePrint("Default\n");
+				#endif
 			break;
 		}
 	}
