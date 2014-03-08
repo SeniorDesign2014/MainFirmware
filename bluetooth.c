@@ -195,3 +195,11 @@ void bluetooth_update(){
 		}
 	}
 }
+
+/*********************************
+bluetooth_end
+This function should be used to terminate bluetooth connection.
+*********************************/
+void bluetooth_end(void){
+	serial_end();
+}

@@ -66,6 +66,7 @@ uint8_t gsm_init(void);
 uint8_t gsm_send_sms(char *phonenumber, char *message);
 
 
+void gsm_end(void);
 
 
 /*
