@@ -13,6 +13,7 @@ This is the integrated file.
 #include "usb_serial.h"
 #include "bluetooth.h"
 #include "gsm.h"
+#include "gps.h"
 #include "HardwareSerial.h"
 #include "MPU6050.h"
 //this is a common header for functions used in several c files ex. simpleprint
@@ -37,9 +38,15 @@ enum states {
 
 //variables for GSM
 char gsm_message[255] = "\0";
-char gsm_phone_number[13] = "15037290820\0";
+char gsm_phone_number[12] = "15037290820";
 int gsm_counter = 0;
 int text_lock = 1;
+
+//variables for GPS
+int gps_lock = -1;
+char gps_lat[16] = "";
+char gps_long[16] = "";
+char gps_vel[16] = "";
 
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
@@ -55,12 +62,13 @@ int main(void){
 	//bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
 	
 	for(;;){
+		simplePrint(".");
 		switch(state){
 		
 			case STATE_DISARMING:
 				simplePrint("DISARMING\n");
-				//TODO: shut down GPS
-				//TODO: shut down GSM
+				gps_end();
+				gsm_end();
 				//TODO: shut down audio
 				state = STATE_DISARMED;
 				
@@ -79,7 +87,7 @@ int main(void){
 				}
 				if(armed == '1'){state = STATE_ARMING;}
 				
-				//TODO: sleep
+				//TODO: sleep micro
 				delay(250);
 
 			break;
@@ -87,26 +95,25 @@ int main(void){
 			case STATE_ARMING:
 				simplePrint("ARMING\n");
 				motion_arm_position();
-				//TODO: GPS init
+				gps_init();
 				state = STATE_ARMED;
 			break;
 			
 			case STATE_ARMED:
 				simplePrint("ARMED\n");
-				//TODO: ADD poll GPS until lock has been established
-				/*
-				if(gps_lock != true){
-					update_gps();
-					if(gps_lock == true){
-						sleep GPS;
+
+				//poll GPS until lock has been established
+				if(gps_lock <= 0){
+					gps_lock = gps_parse(gps_lat, gps_long, gps_vel);
+					if(gps_lock > 0){
+						gps_sleep();
 					}
 				}
-				*/
 				
 				//TODO: timer (with int)
 				delay(250);
 				
-				//poll the motion sensor every .5 s
+				//poll the motion sensor every .25 s
 				alarmed = motion_update();
 				if(alarmed == '1'){
 					state = STATE_ALARMING;
@@ -127,8 +134,9 @@ int main(void){
 			
 			case STATE_ALARMING:
 				simplePrint("ALARMING\n");
-				//TODO: wake up GPS
-				if(!gsm_init()){
+				gps_wake();
+				
+				if(gsm_init() != 1){
 					simplePrint("ERROR - GSM did not init. Have a nice day.\n");
 				}
 				
@@ -139,13 +147,14 @@ int main(void){
 			case STATE_ALARMED:
 				simplePrint("ALARMED\n");
 				
-				//TODO: get GPS data
-				//gps_parse();
+				gps_lock = gps_parse(gps_lat, gps_long, gps_vel); //get GPS data
+
 				//send GSM data every 2 min 
 				if(gsm_counter >= 480){ 
 					if(text_lock){
 						simplePrint("I'll be texting you shortly.");
-						sprintf(gsm_message, "I am being stolen.\0");
+						//TODO: if data is valid, cleverly and secretly pack the message
+						sprintf(gsm_message, "I am being stolen.");
 						gsm_send_sms(gsm_phone_number, gsm_message);
 						gsm_counter = 0; //reset counter
 						text_lock = 0;

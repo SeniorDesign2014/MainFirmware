@@ -43,7 +43,7 @@ extern "C"{
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-uint8_t gsm_init(void);
+int8_t gsm_init(void);
 
 /*
 	gsm_send_sms
@@ -63,9 +63,18 @@ uint8_t gsm_init(void);
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-uint8_t gsm_send_sms(char *phonenumber, char *message);
+int8_t gsm_send_sms(char *phonenumber, char *message);
 
+/*
+	gsm_end
 
+	Call this to close the serial connection.
+	This is where power state will be controlled too, if implemented.
+
+	Return values:
+	None
+*/
+void gsm_end(void);
 
 
 /*
@@ -86,7 +95,7 @@ uint8_t gsm_send_sms(char *phonenumber, char *message);
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-uint8_t gsm_write(char *cmd, int len);
+int8_t gsm_write(char *cmd, int len);
 
 /*
 	gsm_verify_response

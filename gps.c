@@ -4,7 +4,7 @@
 Returns with negative values if messages contain invalid data,
 returns positive values for valid data, and zero for messages
 it doesn't recognize*/
-int parse_gps(char* lat, char* lon, char* vel){
+int gps_parse(char* lat, char* lon, char* vel){
 	char rx_buf[128];
 	int  buf = 0;
 	int i = 0;	
@@ -58,13 +58,13 @@ TODO: Shut off timepulse.
 */
 void gps_init(void){
 	char cfg_tp5[] = { 0xB5, 0x62, 0x06, 0x31, 0x00, 0x00, 0x00, 0x00};
-	
-	//Powers up GPS module if it was fold to turn off
-	gps_pwrup();
 
 	//Initialize Serial2 Port
 	serial2_begin(BAUD2DIV(9600));
 	serial2_format(SERIAL_8N1);
+
+	//Powers up GPS module if it was told to turn off
+	gps_pwrup();
 
 	//Quiet extra message
 	serial2_write("$PUBX,40,GGA,0,0,0,0*5A\r\n", 25);
@@ -106,7 +106,7 @@ void gps_wake(void){
 	serial2_write(wake_up, sizeof(wake_up));
 }
 
-void gps_exit(void){
+void gps_end(void){
 	gps_pwrdwn();
 	serial2_end();
 }
