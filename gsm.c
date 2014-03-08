@@ -20,6 +20,7 @@
 
 	A blocking function that should be called before any of the other functions
 	in this file.
+	Instantiates serial interface 3.
 	Calls gsm_init, which prints data to the USB serial interface.
 	This function can safely be called multiple times.
 
@@ -30,6 +31,9 @@
 */
 uint8_t gsm_init(void)
 {
+	//Activate serial interface
+	serial3_begin(BAUD2DIV(115200));
+	serial_format(SERIAL_8N1);
 	// Wait for GSM module to initialize
 	delay(1000);
 	// Write several noop commands
@@ -49,6 +53,18 @@ uint8_t gsm_init(void)
 	
 	// Write one more noop; we are expecting to receive "OK"
 	return gsm_write("AT\r\n", 4);
+}
+
+/*
+	gsm_exit
+
+	A funtion to close the serial 3 interface
+
+	Return Values:
+	None.
+*/
+void  gsm_end(void){
+	serial3_end();
 }
 
 /*
