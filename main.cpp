@@ -39,7 +39,6 @@ enum states {
 
 //variables for GSM
 char gsm_message[255] = "";
-char gsm_phone_number[12] = "15037290820";
 int gsm_counter = 479;
 int text_lock = 0;
 
