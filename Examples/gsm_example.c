@@ -46,6 +46,8 @@ int main(void)
 		if (success > 0)
 			USBPrint("SMS message transmission succeeded\r\n");
 	}
+
+	gsm_end();
 	
 	return(0);
 }

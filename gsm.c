@@ -29,7 +29,7 @@
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-uint8_t gsm_init(void)
+int8_t gsm_init(void)
 {
 	//Activate serial interface
 	serial3_begin(BAUD2DIV(115200));
@@ -85,9 +85,9 @@ void  gsm_end(void){
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-uint8_t gsm_send_sms(char *phonenumber, char *message)
+int8_t gsm_send_sms(char *phonenumber, char *message)
 {
-	uint8_t success;
+	int8_t success;
 	int size;
 	char cmd1[24];
 	char cmd2[260 + 2];
@@ -137,7 +137,7 @@ uint8_t gsm_send_sms(char *phonenumber, char *message)
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-uint8_t gsm_write(char *cmd, int len)
+int8_t gsm_write(char *cmd, int len)
 {
 	uint8_t character_counter, timeout_seconds;
 	char received[RECEIVE_LIMIT + 1];
