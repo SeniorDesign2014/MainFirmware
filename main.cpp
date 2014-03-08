@@ -39,6 +39,7 @@ enum states {
 char gsm_message[255] = "\0";
 char gsm_phone_number[13] = "15037290820\0";
 int gsm_counter = 0;
+int text_lock = 1;
 
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
@@ -126,9 +127,10 @@ int main(void){
 			
 			case STATE_ALARMING:
 				simplePrint("ALARMING\n");
-				while(!gsm_init());
 				//TODO: wake up GPS
-				//TODO: fire up GSM
+				if(!gsm_init()){
+					simplePrint("ERROR - GSM did not init. Have a nice day.\n");
+				}
 				
 				state = STATE_ALARMED;
 				
@@ -141,11 +143,16 @@ int main(void){
 				//gps_parse();
 				//send GSM data every 2 min 
 				if(gsm_counter >= 480){ 
-					gsm_send_sms(gsm_phone_number, gsm_message);
-					gsm_counter = 0;
+					if(text_lock){
+						simplePrint("I'll be texting you shortly.");
+						sprintf(gsm_message, "I am being stolen.\0");
+						gsm_send_sms(gsm_phone_number, gsm_message);
+						gsm_counter = 0; //reset counter
+						text_lock = 0;
+					}
 				}else{ gsm_counter++;}
 
-				//TODO: aduido (with correct settings)
+				//TODO: audio (with correct settings)
 				
 				//poll bluetooth for disarm message
 				bluetooth_update();

@@ -35,9 +35,9 @@ void simplePrint(char* S){
 }
 
 void bluetooth_init(){
-	serial2_begin(BAUD2DIV(38400));
-	serial2_format(SERIAL_8N1);
-	serial2_clear();
+	serial_begin(BAUD2DIV(38400));
+	serial_format(SERIAL_8N1);
+	serial_clear();
 }
 /* Write Attribute*/
 void bluetooth_write(char handshake, char arm_disarm, char sound_on_off, char sound_sel, char sound_delay){
@@ -47,14 +47,14 @@ void bluetooth_write(char handshake, char arm_disarm, char sound_on_off, char so
 	bt_serial_out[12] = sound_sel;
 	bt_serial_out[13] = sound_delay;
 	
-	serial2_write(bt_serial_out, BT_WRITE_BUF_SIZE);
+	serial_write(bt_serial_out, BT_WRITE_BUF_SIZE);
 }
 
 void bluetooth_set_mode(char discover, char connect){
 	bt_set_mode[5] = discover;
 	bt_set_mode[6] = connect;
 	
-	serial2_write(bt_set_mode, BT_SET_MODE_BUF_SIZE);
+	serial_write(bt_set_mode, BT_SET_MODE_BUF_SIZE);
 }
 
 void bluetooth_whitelist_append(char* device_address, char address_type){
@@ -64,7 +64,7 @@ void bluetooth_whitelist_append(char* device_address, char address_type){
 	}
 	bt_whitelist_append[11] = address_type;
 	
-	serial2_write(bt_whitelist_append, BT_WHITELIST_BUF_SIZE);
+	serial_write(bt_whitelist_append, BT_WHITELIST_BUF_SIZE);
 }
 
 /**********************************************************
@@ -80,21 +80,21 @@ void bluetooth_update(){
 	char i = 0;
 	
 	#ifdef USB_DEBUG
-	usb_serial_putchar((char)serial2_available());
+	usb_serial_putchar((char)serial_available());
 	#endif
 	
-	if((serial2_available()>4)){
-		msg_type = serial2_getchar();
-		length = serial2_getchar();
+	if((serial_available()>4)){
+		msg_type = serial_getchar();
+		length = serial_getchar();
 		//usb_serial_putchar(length);
-		class = serial2_getchar();
-		method = serial2_getchar();
+		class = serial_getchar();
+		method = serial_getchar();
 		
 		for(i=0;i<length;i++){
-			data[i] = serial2_getchar();
+			data[i] = serial_getchar();
 			if(i>30){
 				break;
-				serial2_clear();
+				serial_clear();
 			}
 		}
 		

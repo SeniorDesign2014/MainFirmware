@@ -33,16 +33,16 @@ uint8_t gsm_init(void)
 	// Wait for GSM module to initialize
 	delay(1000);
 	// Write several noop commands
-	serial_write("AT\r\n", 4);
+	serial3_write("AT\r\n", 4);
 	delay(500);
-	serial_write("AT\r\n", 4);
+	serial3_write("AT\r\n", 4);
 	delay(500);
-	serial_write("AT\r\n", 4);
+	serial3_write("AT\r\n", 4);
 	delay(500);
-	serial_write("AT\r\n", 4);
+	serial3_write("AT\r\n", 4);
 	// Disable command echoing
-	serial_write("ATE0\r\n", 6);
-	serial_flush();
+	serial3_write("ATE0\r\n", 6);
+	serial3_flush();
 	delay(3000);
 	// Enable verbose errors in case of trouble:
 	//gsm_write("AT+CMEE=2\r\n", 11);
@@ -132,7 +132,7 @@ uint8_t gsm_write(char *cmd, int len)
 	/* 
 		Clear the serial buffer for Serial1 of data before sending the command
 	*/
-	serial_clear();
+	serial3_clear();
 	
 	/* 
 		Make a "cleaned-up" version of the command without the
@@ -144,14 +144,14 @@ uint8_t gsm_write(char *cmd, int len)
 		Send the command and wait for the response.
 		Time-out if it takes more than COMMAND_TIMEOUT seconds.
 	*/
-	serial_write(cmd, len);	// Write the command to the GSM module
-	serial_flush();
+	serial3_write(cmd, len);	// Write the command to the GSM module
+	serial3_flush();
 	timeout_seconds = COMMAND_TIMEOUT;
-	while (!serial_available() && timeout_seconds > 0) {
+	while (!serial3_available() && timeout_seconds > 0) {
 		delay(1000);//DEBUG
 		timeout_seconds--;
 	}	
-	if (!serial_available()) {
+	if (!serial3_available()) {
 		// No response
 		snprintf(print_status, RECEIVE_LIMIT + len - 1 + 39, "No response (timed out) for command: %s\r\n", cmd_clean);
 		USBPrint(print_status);
@@ -159,13 +159,13 @@ uint8_t gsm_write(char *cmd, int len)
 	}
 	
 	/*
-		Get response from serial buffer
+		Get response from serial3 buffer
 	
 		The first two characters will likely be \r\n!
 	*/
 	character_counter = 0;
-	while (serial_available() && character_counter < RECEIVE_LIMIT) {
-		c = serial_getchar();
+	while (serial3_available() && character_counter < RECEIVE_LIMIT) {
+		c = serial3_getchar();
 		sprintf(received + character_counter, "%c", c);
 		character_counter++;
 	}
@@ -177,7 +177,7 @@ uint8_t gsm_write(char *cmd, int len)
 		// Unexpected response
 		snprintf(print_status, RECEIVE_LIMIT + len - 1 + 37, "Unexpected response for command %s: %s\r\n", cmd_clean, received);
 		USBPrint(print_status);
-		serial_clear();
+		serial3_clear();
 		return 0;
 	}
 	
@@ -186,7 +186,7 @@ uint8_t gsm_write(char *cmd, int len)
 	*/
 	snprintf(print_status, RECEIVE_LIMIT + len - 1 + 26, "Response for command %s: %s\r\n", cmd_clean, received);
 	USBPrint(print_status);
-	serial_clear();
+	serial3_clear();
 	return 1;
 }
 
