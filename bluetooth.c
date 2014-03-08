@@ -181,6 +181,7 @@ void bluetooth_update(){
 								simplePrint("Disconnected\n");
 								#endif
 								bt_connected_flag = 0;
+								bt_set_mode_flag = -1;
 							break;
 						}
 					break;

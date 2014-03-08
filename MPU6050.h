@@ -24,13 +24,10 @@ THE SOFTWARE.
 #ifndef MPU6050_H
 #define MPU6050_H
 
-//Call this first (turn on i2c)
-void motion_i2c_init(void);
-
-//Then this (sets up MPU6050 registers)
+//Call this first (turns on i2c and sets up MPU6050 registers)
 int motion_init(void);
 
-// Call this once to calibrate 
+// Call this once to calibrate, blocking (5s) 
 void motion_calibrate(void);
 
 //This is the position that is checked against for setting off the alarm
@@ -39,6 +36,9 @@ void motion_arm_position(void);
 //Call this at least every 250ms in ARMED state, it will return 0 for "nothing is wrong"
 // it returns 1 when the bike has moved from the calibrate position
 char motion_update(void);
+
+//this should be called to shut down this interface
+void motion_end(void);
 
 //these should be invisible for abstraction reasons
 //void LDByteWriteI2C(unsigned char ControlByte, unsigned char Address, unsigned char data);

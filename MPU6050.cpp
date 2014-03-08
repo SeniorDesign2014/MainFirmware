@@ -67,10 +67,6 @@ float GYRO_XANGLE_ARMED;
 float GYRO_YANGLE_ARMED;
 float GYRO_ZANGLE_ARMED;
 
-void motion_i2c_init(void){
-	Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, I2C_RATE_400);
-}
-
 void LDByteWriteI2C(unsigned char ControlByte, unsigned char Address, unsigned char data){
 	
 	Wire.beginTransmission(ControlByte);	//generate start condition
@@ -101,15 +97,13 @@ void LDByteReadI2C(unsigned char ControlByte, unsigned char Address, unsigned ch
 int motion_init(void){	
 	int ret;
 	
-	//LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_SMPLRT_DIV, 0x01);
-	
-	//delay(20);
-	if(MPU6050_Test_I2C()){simplePrint("MPU is alive\n");}
-	Setup_MPU6050();
-	delay(10);
-	//simplePrint("MPU is setting up... ");
-	ret = MPU6050_Check_Registers();
-	//if(ret==0){simplePrint("Set up worked!\n");}
+	Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, I2C_RATE_400);
+	while(ret){	
+		if(MPU6050_Test_I2C()){simplePrint("MPU is alive\n");}
+		Setup_MPU6050();
+		delay(10);
+		ret = MPU6050_Check_Registers();
+	}
 	return(ret);
 }
 
@@ -133,6 +127,9 @@ void motion_calibrate(void){
 
 }
 
+void motion_end(void){
+	
+}
 
 /********************************************************************
 This is the primary implementation for the motion sensor. It checks the
