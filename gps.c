@@ -126,3 +126,7 @@ void gps_end(void){
 	gps_pwrdwn();
 	serial2_end();
 }
+
+void pack_message(char* message, struct location* data, char* stolen){
+	sprintf(message, "{\"clientid\":\"00000001\",\"x\":\"%s\",\"xm\":\"%s\",\"y\":\"%s\",\"ym\":\"%s\",\"vel\":\"%s\",\"deg\":\"%s\",\"stolen\":\"%c\"}", data->lat, data->lat_min, data->lon, data->lon_min, data->vel, stolen); 
+}

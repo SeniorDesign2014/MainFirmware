@@ -1,0 +1,6 @@
+#Ignore secret file so we don't give out the real number
+secret.h
+
+#ignore build files
+/*.o
+/*.d

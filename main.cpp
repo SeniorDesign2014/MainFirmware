@@ -20,6 +20,10 @@ This is the integrated file.
 //this is a common header for functions used in several c files ex. simpleprint
 #include "common.h"		
 
+#ifndef SECRET_NUMBER
+#define SECRET_NUMBER 16668675309
+#endif
+
 //state variables
 int state = 0;
 char alarmed = '0';
@@ -208,7 +212,7 @@ int main(void){
 					simplePrint("I'll be texting you shortly.");
 					//if data is valid, cleverly and secretly pack the message
 					if(gps_lock){
-						secret_pack_message(gsm_message, gps_lat, gps_long, gps_vel, alarmed);
+						pack_message(gsm_message, gps_lat, gps_long, gps_vel, alarmed);
 						simplePrint("Packed you a secret message.\n");
 						simplePrint(gsm_message);
 						if(text_lock){

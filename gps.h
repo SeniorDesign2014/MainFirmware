@@ -31,7 +31,7 @@ void gps_pwrdwn(void);
 void gps_sleep(void);
 void gps_wake(void);
 void gps_end(void);
-
+void pack_message(char* message, struct location* data, char* stolen);
 #ifdef __cplusplus
 }
 #endif
