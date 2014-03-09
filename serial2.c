@@ -37,7 +37,7 @@
 ////////////////////////////////////////////////////////////////
 
 #define TX_BUFFER_SIZE 40
-#define RX_BUFFER_SIZE 64
+#define RX_BUFFER_SIZE 128
 #define IRQ_PRIORITY  64  // 0 = highest priority, 255 = lowest
 
 

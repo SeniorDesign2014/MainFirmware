@@ -45,9 +45,7 @@ int text_lock = 0;
 //variables for GPS
 int gps_lock = -1;
 int gps_ret = -1;
-char gps_lat[16] = "";
-char gps_long[16] = "";
-char gps_vel[16] = "";
+struct location gps_loc;
 
 //variable for motion
 char motion_redundancy[MOTION_REDUNDANCY_COUNT];
@@ -145,7 +143,7 @@ int main(void){
 				//poll GPS until lock has been established
 				if(gps_lock <= 0){
 					//get GPS data
-					gps_ret = gps_parse(gps_lat, gps_long, gps_vel);
+					gps_ret = gps_parse(&gps_loc);
 					if(gps_ret > 0){
 						gps_lock = 1;
 					}else if(gps_ret < 0){
@@ -199,13 +197,12 @@ int main(void){
 				simplePrint("ALARMED\n");
 				
 				//get GPS data
-				gps_ret = gps_parse(gps_lat, gps_long, gps_vel);
+				gps_ret = gps_parse(&gps_loc);
 				if(gps_ret > 0){
 					gps_lock = 1;
 				}else if(gps_ret < 0){
 					gps_lock = 0;	
 				}
-
 				//send GSM data every 2 min 
 				if(gsm_counter >= 480){ 
 					simplePrint("I'll be texting you shortly.");

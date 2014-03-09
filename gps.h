@@ -13,8 +13,19 @@ extern "C" {
 
 /* Needs RX_BUFFER_SIZE to be set to 96 */
 
+/*Nick makes a struct!*/
+struct location{
+	char lat[3];
+	char lon[4];
+	char lat_min[7];
+	char lon_min[7];
+	char vel[5];
+	//char deg[5];
+};
+
+
 void gps_init(void);
-int gps_parse(char* lat, char* lon, char* vel);
+int gps_parse(struct location* data);
 void gps_pwrup(void);
 void gps_pwrdwn(void);
 void gps_sleep(void);
