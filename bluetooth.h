@@ -10,10 +10,6 @@ Author: Paul Burris
  extern "C" {
  #endif
  
-#define BT_WRITE_BUF_SIZE 14
-#define BT_WHITELIST_BUF_SIZE 12
-#define BT_SET_MODE_BUF_SIZE 7
-
 #define BT_NON_DISCOVERABLE 0
 #define BT_LIMITED_DISCOVERABLE 1 //lower power, I think
 #define BT_GENERAL_DISCOVERABLE 2 //recommended
@@ -27,15 +23,15 @@ Author: Paul Burris
 #define ASCII 0x30
 
 //bluetooth variables
-extern int bt_write_flag;
-extern int bt_whitelist_flag;
-extern int bt_set_mode_flag;
-extern int bt_connected_flag;
-extern int bt_armed;
-extern int bt_sound;
-extern int bt_sound_select;
-extern int bt_sound_delay;
-extern int bt_new_data;
+extern char bt_write_flag;
+extern char bt_whitelist_flag;
+extern char bt_set_mode_flag;
+extern char bt_connected_flag;
+extern char bt_armed;
+extern char bt_sound;
+extern char bt_sound_select;
+extern char bt_sound_delay;
+extern char bt_new_data;
 
 //Call this first!
 void bluetooth_init(void);
@@ -51,6 +47,8 @@ void bluetooth_write(char handshake, char arm_disarm, char sound_on_off, char so
 
 //Only append when you are not connected
 void bluetooth_whitelist_append(char* device_address, char address_type);
+
+void bluetooth_reset(void);
 
  #ifdef __cplusplus
  }

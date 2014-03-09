@@ -34,7 +34,7 @@ void motion_calibrate(void);
 void motion_arm_position(void);
 
 //Call this at least every 250ms in ARMED state, it will return 0 for "nothing is wrong"
-// it returns 1 when the bike has moved from the calibrate position
+// it returns ASCII 1 when the bike has moved from the calibrate position
 char motion_update(void);
 
 //this should be called to shut down this interface
@@ -161,13 +161,15 @@ extern "C" {
 #define MPU6050_RA_FIFO_R_W 0x74
 #define MPU6050_RA_WHO_AM_I 0x75
 
-#define ACCEL_X_TOLERANCE 50.0
-#define ACCEL_Y_TOLERANCE 50.0
-#define ACCEL_Z_TOLERANCE 50.0
+#define ACCEL_X_TOLERANCE 40.0
+#define ACCEL_Y_TOLERANCE 40.0
+#define ACCEL_Z_TOLERANCE 40.0
 
-#define GYRO_X_TOLERANCE 50.0
-#define GYRO_Y_TOLERANCE 50.0
-#define GYRO_Z_TOLERANCE 50.0
+#define GYRO_X_TOLERANCE 40.0
+#define GYRO_Y_TOLERANCE 40.0
+#define GYRO_Z_TOLERANCE 40.0
+
+#define MOTION_REDUNDANCY_COUNT 1
 
 #define dt 0.0025
 

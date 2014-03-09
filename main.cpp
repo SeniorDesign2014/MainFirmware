@@ -44,39 +44,73 @@ int text_lock = 0;
 
 //variables for GPS
 int gps_lock = -1;
+int gps_ret = -1;
 char gps_lat[16] = "";
 char gps_long[16] = "";
 char gps_vel[16] = "";
+
+//variable for motion
+char motion_redundancy[MOTION_REDUNDANCY_COUNT];
+int motion_index = 0;
+int motion_i = 0; 
+char motion_check = 0;
+
+//variables for bluetooth
+int bt_broadcasting = 0;
 
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
 char debug_output[255];
 
 int main(void){
-	//pinMode(LED_BUILTIN, OUTPUT);
+	//pinMode(2, OUTPUT);
 
 	//perform start up
 	bluetooth_init();
 	motion_init();
 	motion_calibrate();
-	
+
+	bluetooth_reset();
+	delay(250);
+	bluetooth_update();
+	/*
+	bluetooth_reset();
+	delay(25);
+	bluetooth_update();
+	delay(25);
+	bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
+	delay(25);
+	bluetooth_update();
+	delay(25);
+	bluetooth_write('0', '0', '0', '0', '0');
+	delay(25);
+	bluetooth_update();
+	delay(25);
+	*/
+
 	//TODO: implement bluetooth whitleist
 	
+
 	for(;;){
 		//poll bluetooth every so often
 		bluetooth_update();
 		if(bt_new_data == 1){
-			armed = bt_armed + ASCII;
-			sound = bt_sound + ASCII;
-			sound_sel = bt_sound_select + ASCII;
-			sound_delay = bt_sound_delay + ASCII;
+			armed = bt_armed;
+			sound = bt_sound;
+			sound_sel = bt_sound_select;
+			sound_delay = bt_sound_delay;
 			
 			bluetooth_write(secret, armed, sound, sound_sel, sound_delay);
 			bt_new_data = 0;
 		}
-		if((bt_connected_flag != 1) && (bt_set_mode_flag != 1)){
-			bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
+		/*
+		if(bt_connected_flag != 1){
+			if(bt_set_mode_flag == 0){
+				bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
+				simplePrint("Setting up BT\n");
+			}
 		}
+		*/
 
 		//state machine
 		switch(state){
@@ -110,9 +144,17 @@ int main(void){
 
 				//poll GPS until lock has been established
 				if(gps_lock <= 0){
-					gps_lock = gps_parse(gps_lat, gps_long, gps_vel);
+					//get GPS data
+					gps_ret = gps_parse(gps_lat, gps_long, gps_vel);
+					if(gps_ret > 0){
+						gps_lock = 1;
+					}else if(gps_ret < 0){
+						gps_lock = 0;	
+					}
+
 					if(gps_lock > 0){
 						gps_sleep();
+						simplePrint("GPS locked and sleeping\n");
 					}
 				}
 				
@@ -120,7 +162,20 @@ int main(void){
 				delay(250);
 				
 				//poll the motion sensor every .25 s
-				alarmed = motion_update();
+				motion_redundancy[motion_index] = motion_update();
+				motion_index++;
+				if(motion_index == MOTION_REDUNDANCY_COUNT){
+					motion_index = 0;
+				}
+				motion_check = 0;
+				for(motion_i=0; motion_i<MOTION_REDUNDANCY_COUNT; motion_i++){
+					if('1' == motion_redundancy[motion_i]){
+						motion_check++;
+					}
+				}
+				if(motion_check == MOTION_REDUNDANCY_COUNT){
+					alarmed = '1';
+				}
 				if(alarmed == '1'){
 					state = STATE_ALARMING;
 				}
@@ -143,7 +198,13 @@ int main(void){
 			case STATE_ALARMED:
 				simplePrint("ALARMED\n");
 				
-				gps_lock = gps_parse(gps_lat, gps_long, gps_vel); //get GPS data
+				//get GPS data
+				gps_ret = gps_parse(gps_lat, gps_long, gps_vel);
+				if(gps_ret > 0){
+					gps_lock = 1;
+				}else if(gps_ret < 0){
+					gps_lock = 0;	
+				}
 
 				//send GSM data every 2 min 
 				if(gsm_counter >= 480){ 
@@ -151,19 +212,21 @@ int main(void){
 					//if data is valid, cleverly and secretly pack the message
 					if(gps_lock){
 						secret_pack_message(gsm_message, gps_lat, gps_long, gps_vel, alarmed);
+						simplePrint("Packed you a secret message.\n");
+						simplePrint(gsm_message);
 						if(text_lock){
 							text_lock = 0;
 							gsm_send_sms(SECRET_NUMBER, gsm_message);
 						}
 						
+					}else{
+						simplePrint("No GPS lock\n");
 					}
 					gsm_counter = 0; //reset counter
 				}else{ gsm_counter++;}
 
 				//TODO: audio (with correct settings)
 				
-				//poll bluetooth for disarm message
-				bluetooth_update();
 				if(armed == '0'){state = STATE_DISARMING;}
 
 				//TODO: sleep. BUT don't remove delay til then!

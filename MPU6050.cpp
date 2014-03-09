@@ -95,7 +95,7 @@ void LDByteReadI2C(unsigned char ControlByte, unsigned char Address, unsigned ch
 }
 
 int motion_init(void){	
-	int ret;
+	int ret = 1;
 	
 	Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, I2C_RATE_400);
 	while(ret){	
@@ -134,7 +134,7 @@ void motion_end(void){
 /********************************************************************
 This is the primary implementation for the motion sensor. It checks the
 gyroscope and accelerometer for changing values. If the values have changed
-beyond the starting threshold, it will return 1.
+beyond the starting threshold, it will return ASCII 1.
 ********************************************************************/
 char motion_update(){
 	float accelXdiff;
@@ -149,10 +149,11 @@ char motion_update(){
 	Get_Accel_Angles();
 	accelXdiff = ACCEL_XANGLE - ACCEL_XANGLE_ARMED;
 	accelYdiff = ACCEL_YANGLE - ACCEL_YANGLE_ARMED;
-	accelZdiff = ACCEL_ZANGLE - ACCEL_ZANGLE_ARMED;
+	//TODO: fix
+	//accelZdiff = ACCEL_ZANGLE - ACCEL_ZANGLE_ARMED;
 	
-	if((fabsf(accelXdiff) > ACCEL_X_TOLERANCE)|| (fabsf(accelYdiff) > ACCEL_Y_TOLERANCE) 
-			|| (fabsf(accelZdiff) > ACCEL_Z_TOLERANCE)){
+	if((fabsf(accelXdiff) > ACCEL_X_TOLERANCE)|| (fabsf(accelYdiff) > ACCEL_Y_TOLERANCE)){ 
+		//	|| (fabsf(accelZdiff) > ACCEL_Z_TOLERANCE)){
 		return('1'); 	//something accelerometery is going on
 	}
 	
@@ -162,8 +163,7 @@ char motion_update(){
 	gyroYdiff = GYRO_YANGLE - GYRO_YANGLE_ARMED;
 	gyroZdiff = GYRO_ZANGLE - GYRO_ZANGLE_ARMED;
 	
-	if((fabsf(gyroXdiff) > GYRO_X_TOLERANCE)|| (fabsf(gyroYdiff) > GYRO_Y_TOLERANCE) 
-			|| (fabsf(gyroZdiff) > GYRO_Z_TOLERANCE)){
+	if((fabsf(gyroXdiff) > GYRO_X_TOLERANCE)|| (fabsf(gyroYdiff) > GYRO_Y_TOLERANCE) || (fabsf(gyroZdiff) > GYRO_Z_TOLERANCE)){
 		return('1');	//something gyroscopey is going on
 	}
 	

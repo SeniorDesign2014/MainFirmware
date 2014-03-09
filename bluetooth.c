@@ -10,24 +10,28 @@ Author: Paul Burris
 #include "HardwareSerial.h"
 #include "common.h"
 
-//#define USB_DEBUG
+#define BT_WRITE_BUF_SIZE 14
+#define BT_WHITELIST_BUF_SIZE 12
+#define BT_SET_MODE_BUF_SIZE 7
+#define BT_RESET_BUF_SIZE 6
 
-int bt_write_flag = 0;
-int bt_whitelist_flag = 0;
-int bt_set_mode_flag = 0;
-int bt_connected_flag = 0;
-int bt_armed = 0;
-int bt_sound = 0;
-int bt_sound_select = 0;
-int bt_sound_delay = 0;
-int bt_new_data = 0; 
+#define USB_DEBUG
 
-char bt_serial_out[BT_WRITE_BUF_SIZE] = 
-	{0x0D, 0x00, 0x09, 0x02, 0x00, 0x14, 0x00, 0x00, 0x05, 0x30, 0x30, 0x30, 0x30, 0x30};
-char bt_whitelist_append[BT_WHITELIST_BUF_SIZE] = 
-	{0x0B , 0x00, 0x07, 0x00, 0x0A, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
-char bt_set_mode[BT_SET_MODE_BUF_SIZE] = {0x06, 0x00, 0x02, 0x06, 0x01, 0x02, 0x02};
-	
+char bt_write_flag = 0;
+char bt_whitelist_flag = 0;
+char bt_set_mode_flag = 0;
+char bt_connected_flag = 0;
+char bt_armed = 0;
+char bt_sound = 0;
+char bt_sound_select = 0;
+char bt_sound_delay = 0;
+char bt_new_data = 0; 
+
+char bt_serial_out[] = {0x0D, 0x00, 0x09, 0x02, 0x00, 0x14, 0x00, 0x00, 0x05, 0x30, 0x30, 0x30, 0x30, 0x30};
+char bt_whitelist_append[] = {0x0B , 0x00, 0x07, 0x00, 0x0A, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+char bt_set_mode[] = {0x06, 0x00, 0x02, 0x06, 0x01, 0x02, 0x02};
+char bt_reset[] = {0x05, 0x00, 0x01, 0x00, 0x00, 0x00};
+
 void simplePrint(char* S){
 	while(*S){
 		usb_serial_putchar(*S++);
@@ -38,6 +42,11 @@ void bluetooth_init(){
 	serial_begin(BAUD2DIV(38400));
 	serial_format(SERIAL_8N1);
 	serial_clear();
+
+	pinMode(2, OUTPUT);
+	digitalWriteFast(2, HIGH);
+
+	//TODO: implement whitelist
 }
 /* Write Attribute*/
 void bluetooth_write(char handshake, char arm_disarm, char sound_on_off, char sound_sel, char sound_delay){
@@ -65,6 +74,13 @@ void bluetooth_whitelist_append(char* device_address, char address_type){
 	bt_whitelist_append[11] = address_type;
 	
 	serial_write(bt_whitelist_append, BT_WHITELIST_BUF_SIZE);
+}
+
+void bluetooth_reset(void){
+//	serial_write(bt_reset, BT_RESET_BUF_SIZE);
+	digitalWriteFast(2, LOW);
+	delay(3);
+	digitalWriteFast(2, HIGH);
 }
 
 /**********************************************************
@@ -108,7 +124,7 @@ void bluetooth_update(){
 						switch(method){
 							case 0x0A: //whitelist append
 								if((data[0] & data[1]) == 0){bt_whitelist_flag = 1;}
-								else{bt_whitelist_flag = -1;}
+								else{bt_whitelist_flag = 0;}
 							break;
 						}
 					break;
@@ -119,7 +135,7 @@ void bluetooth_update(){
 								simplePrint("Write\n");
 								#endif
 								if((data[0] & data[1]) == 0){bt_write_flag = 1;}
-								else{bt_write_flag = -1;}
+								else{bt_write_flag = 0;}
 							break;
 						}
 					break;
@@ -129,8 +145,14 @@ void bluetooth_update(){
 								#ifdef USB_DEBUG
 								simplePrint("Mode Set\n");
 								#endif
-								if((data[0] & data[1]) == 0){bt_set_mode_flag = 1;}
-								else{bt_set_mode_flag = -1;}
+								if((data[0] & data[1]) == 0){
+									bt_set_mode_flag = 1;
+									simplePrint("Mode Set\n");
+									bluetooth_write('0', '0', '0', '0', '0');
+								}else{
+									bt_set_mode_flag = 0;
+									simplePrint("Mode NOT Set\n");
+								}
 							break;
 						}
 					break;
@@ -143,9 +165,12 @@ void bluetooth_update(){
 				#endif
 				switch(class){
 					case 0x00: //Bootup
+						simplePrint("Bluetooth");
 						switch(method){
 							case 0x00: //bootup
+								simplePrint(" Boot!\n");
 								//TODO: fix
+								bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
 							break;
 						}
 					break;
@@ -157,10 +182,14 @@ void bluetooth_update(){
 								simplePrint("New data!\n");
 								#endif
 								bt_new_data = 1;
-								bt_armed = data[8] - ASCII;
-								bt_sound = data[9] - ASCII;
-								bt_sound_select = data[10] - ASCII;
-								bt_sound_delay = data[11] - ASCII;
+								bt_armed = data[8];
+								usb_serial_putchar(bt_armed);
+								bt_sound = data[9];
+								usb_serial_putchar(bt_sound);
+								bt_sound_select = data[10];
+								usb_serial_putchar(bt_sound_select);
+								bt_sound_delay = data[11];
+								usb_serial_putchar(bt_sound_delay);
 								
 							break;
 						}
@@ -172,16 +201,17 @@ void bluetooth_update(){
 								#ifdef USB_DEBUG
 								simplePrint("Connected\n");
 								#endif
-								if(data[0] & BT_CONNECTION_COMPLETE){bt_connected_flag = 1;}
-								else{bt_connected_flag = 0;}
+								bt_connected_flag = 1;
+
 							break;
 							
 							case 0x04: //disconnected
 								#ifdef USB_DEBUG
 								simplePrint("Disconnected\n");
 								#endif
+								bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
 								bt_connected_flag = 0;
-								bt_set_mode_flag = -1;
+								bt_set_mode_flag = 0;
 							break;
 						}
 					break;

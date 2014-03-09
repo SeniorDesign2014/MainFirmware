@@ -9,36 +9,34 @@ int gps_parse(char* lat, char* lon, char* vel){
 	int  buf = 0;
 	int i = 0;	
 
-	buf = serial_getchar();
+	buf = serial2_getchar();
 
 	if(buf == 0x24){
 		while(rx_buf[i-1] != 0x0A){
-			buf = serial_getchar();
+			buf = serial2_getchar();
 			if(buf != -1){
 				rx_buf[i] = buf;
 				i++;
-				}
 			}
-}
+		}
+	}
 
 
-
-if(strncmp(rx_buf, "GPGLL", 5) == 0){
+	if(strncmp(rx_buf, "GPGLL", 5) == 0){
 		if(rx_buf[6] == ','){
 			//invalid data
 			return(-1);
-			}
+		}
 		for(i=0; i< 12; i++){
 			lat[i] = rx_buf[7+i];
-			}
-			
+		}
 		for(i=0; i< 13; i++){
 			lon[i] = rx_buf[19+i];
-			}
+		}
 		return(1);
-}
+	}
 
-if(strncmp(rx_buf, "GPVTG", 5) == 0){
+	if(strncmp(rx_buf, "GPVTG", 5) == 0){
 		if(rx_buf[12] == ','){
 			//invalid data
 			return(-2);
@@ -47,10 +45,9 @@ if(strncmp(rx_buf, "GPVTG", 5) == 0){
 			vel[i] = rx_buf[20+i];
 			}
 		return(2);
-}
+	}
 
-
-return(0);
+	return(0);
 }
 
 /* Turns off extra messages from GPS.
