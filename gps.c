@@ -1,10 +1,11 @@
 #include "gps.h"
 
+
 /*Checking incoming messages for NEMEA GPGLL and GPVTG messages.
 Returns with negative values if messages contain invalid data,
 returns positive values for valid data, and zero for messages
 it doesn't recognize*/
-int gps_parse(char* lat, char* lon, char* vel){
+int gps_parse(struct location* data){
 	char rx_buf[128];
 	int  buf = 0;
 	int i = 0;	
@@ -28,13 +29,31 @@ if(strncmp(rx_buf, "GPGLL", 5) == 0){
 			//invalid data
 			return(-1);
 			}
-		for(i=0; i< 12; i++){
-			lat[i] = rx_buf[7+i];
+		
+		for(i=0; i<3; i++){
+			if(rx_buf[17] == 'S'){
+				data->lat[i] = '-';
+				i++;
+			}
+			data->lat[i] = rx_buf[7+i];
+			}
+
+		for(i=0; i<8; i++){
+			data->lat_min[i] = rx_buf[8+i];
 			}
 			
-		for(i=0; i< 13; i++){
-			lon[i] = rx_buf[19+i];
+		for(i=0; i<4; i++){
+			if(rx_buf[17] == 'S'){
+				data->lon[i] = '-';
+				i++;
 			}
+			data->lon[i] = rx_buf[19+i];
+			}
+		
+		for(i=0; i<8; i++){
+			data->lon_min[i] = rx_buf[22+i];
+			}
+
 		return(1);
 }
 
@@ -44,7 +63,7 @@ if(strncmp(rx_buf, "GPVTG", 5) == 0){
 			return(-2);
 			}
 		for(i=0; i< 5; i++){
-			vel[i] = rx_buf[20+i];
+			data->vel[i] = rx_buf[20+i];
 			}
 		return(2);
 }

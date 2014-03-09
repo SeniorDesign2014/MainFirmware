@@ -44,9 +44,7 @@ int text_lock = 1;
 
 //variables for GPS
 int gps_lock = -1;
-char gps_lat[16] = "";
-char gps_long[16] = "";
-char gps_vel[16] = "";
+struct location gps_loc;
 
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
@@ -104,7 +102,7 @@ int main(void){
 
 				//poll GPS until lock has been established
 				if(gps_lock <= 0){
-					gps_lock = gps_parse(gps_lat, gps_long, gps_vel);
+					gps_lock = gps_parse(&gps_loc);
 					if(gps_lock > 0){
 						gps_sleep();
 					}
@@ -147,7 +145,7 @@ int main(void){
 			case STATE_ALARMED:
 				simplePrint("ALARMED\n");
 				
-				gps_lock = gps_parse(gps_lat, gps_long, gps_vel); //get GPS data
+				gps_lock = gps_parse(&gps_loc); //get GPS data
 
 				//send GSM data every 2 min 
 				if(gsm_counter >= 480){ 
