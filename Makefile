@@ -16,11 +16,8 @@ OPTIONS += -D__MK20DX256__ -DARDUIO=104
 #************************************************************************
 
 # path location for Teensy Loader, teensy_post_compile and teensy_reboot
-#TOOLSPATH = ./tools   # on Linux
-TOOLSPATH = ../../../tools/avr/bin   # on Mac or Windows
-
-# path location for Arduino libraries (currently not used)
-#LIBRARYPATH = ../../../../libraries
+TOOLSPATH = ./tools/   # on Linux
+#TOOLSPATH = ../../../tools/avr/bin   # on Mac or Windows
 
 # path location for the arm-none-eabi compiler
 COMPILERPATH = ./tools/arm-none-eabi/bin
@@ -68,8 +65,8 @@ $(TARGET).elf: $(OBJS) mk20dx256.ld
 %.hex: %.elf
 	$(SIZE) $<
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
-	#$(abspath $(TOOLSPATH))/teensy_post_compile -file=$(basename $@) -path=$(shell pwd) -tools=$(abspath $(TOOLSPATH))
-	#-$(abspath $(TOOLSPATH))/teensy_reboot
+	$(abspath $(TOOLSPATH))/teensy_post_compile -file=$(basename $@) -path=$(shell pwd) -tools=$(abspath $(TOOLSPATH))
+	-$(abspath $(TOOLSPATH))/teensy_reboot
 
 
 # compiler generated dependency info
