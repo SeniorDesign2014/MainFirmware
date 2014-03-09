@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    boolean tsi_sleep(uint8_t pin, uint16_t threshold);
+    boolean tsi_init(uint8_t pin, uint16_t threshold);
     void tsi_stop(void);
 #ifdef __cplusplus
 }

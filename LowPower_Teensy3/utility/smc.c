@@ -91,7 +91,7 @@ void enter_vlpr(char lpwui_value) {
     
     // Wait for VLPS regulator mode to be confirmed
     while((PMC_REGSC & PMC_REGSC_REGONS_MASK) ==0x04){}// 0 Regulator in stop Reg mode
-    delay(10);
+
     // 1 MCU is in Run regulation mode
     while((SMC_PMSTAT & SMC_PMSTAT_PMSTAT_MASK) != 4){}
 }
@@ -179,7 +179,7 @@ void enter_lls(void) {
     // Set the LPLLSM field to 0b011 for LLS mode
     SMC_PMCTRL = SMC_PMCTRL_STOPM(0x3) ;
     dummyread = SMC_PMCTRL;
-    //delay(100);
+
     // Now execute the stop instruction to go into LLS
     stop();
 }
@@ -363,11 +363,14 @@ void disable_lpwui(void) {
  *          to optionally set the sleep on exit bit.
  *******************************************************************************/
 void stop(void) {
+    // disable systick timer
+    SYST_CSR &= ~SYST_CSR_ENABLE;
 	// Set the SLEEPDEEP bit to enable deep sleep mode (STOP)
 	SCB_SCR |= SCB_SCR_SLEEPDEEP_MASK;
-    //delay(100);
-	// WFI instruction will start entry into STOP mode 
+	// WFI instruction will start entry into STOP mode
 	asm("WFI");
+    // renable systick timer
+    SYST_CSR |= SYST_CSR_ENABLE;
 }
 
 /*******************************************************************************
@@ -375,10 +378,13 @@ void stop(void) {
  * and then executes the WFI instruction to enter the mode.
  *******************************************************************************/
 void wait(void) {
+    // disable systick timer
+    SYST_CSR &= ~SYST_CSR_ENABLE;
 	// Clear the SLEEPDEEP bit to make sure we go into WAIT (sleep)
     // mode instead of deep sleep.
 	SCB_SCR &= ~SCB_SCR_SLEEPDEEP_MASK;
-    
 	// WFI instruction will start entry into WAIT mode
 	asm("WFI");
+    // renable systick timer
+    SYST_CSR |= SYST_CSR_ENABLE;
 }

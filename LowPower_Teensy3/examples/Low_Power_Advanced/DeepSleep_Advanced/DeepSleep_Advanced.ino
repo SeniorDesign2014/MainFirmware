@@ -7,7 +7,7 @@
  *  multiple wake sources with multiple configurations. 
  *  Debugging messages are printed through Serial 1.
  *
- *  Tested with Arduino 1.0.5 and Teensyduino 1.16rc1.    
+ *  Tested with Arduino 1.0.5 and Teensyduino 1.18
  *********************************************************/
 #include <LowPower_Teensy3.h>
 #include <Time.h> 
@@ -20,12 +20,16 @@ configSleep* LP_config;// sleep configuration
 
 uint8_t LEDPIN = 13;
 
+// User callback handler
+void callbackhandler() {
+  setSyncProvider(getTeensy3Time);
+}
+
 void setup() {
   Serial.begin(0);
   pinMode(LEDPIN, OUTPUT);
   Uart.begin(115200);
   setSyncProvider(getTeensy3Time);
-  //while(!Serial.dtr()) ;
   Uart.println("DeepSleep Advanced Example");
   if (timeStatus()!= timeSet) Uart.println("Unable to sync with the RTC"); 
   else Uart.println("RTC has set the system time");
@@ -51,11 +55,11 @@ void sleep_config_1() {
   LP_config->tsi_pin = 15;
   // configure TSI wakeup threshold
   LP_config->tsi_threshold = touchRead(LP_config->tsi_pin) + 256;
+  // user callback function
+  LP_config->callbackfunc = callbackhandler;
   // sleep
   LP.DeepSleep(LP_config);
-  
-  setSyncProvider(getTeensy3Time);
-  
+ 
   blink();
   
   digitalClockDisplay();
@@ -89,10 +93,10 @@ void sleep_config_2() {
   LP_config->tsi_pin = 16;
   // configure TSI wakeup threshold
   LP_config->tsi_threshold = touchRead(LP_config->tsi_pin) + 256;
+  // user callback function
+  LP_config->callbackfunc = callbackhandler;
   // sleep
   LP.DeepSleep(LP_config);
-  
-  setSyncProvider(getTeensy3Time);
   
   blink();
   

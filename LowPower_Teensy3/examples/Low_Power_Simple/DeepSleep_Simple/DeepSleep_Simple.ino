@@ -12,7 +12,7 @@
  *  used a wire connected pin 0. 
  *
  *  Tested and compiled under Arduino 1.0.5 and 
- *  Teensyduino 1.16rc1.    
+ *  Teensyduino 1.18
  *********************************************************/
 #include <LowPower_Teensy3.h>
 
@@ -31,7 +31,7 @@ void setup() {
   pinMode(LEDPIN, OUTPUT);
   
   /*****************************************************
-   * Intialize TSI wakeup threshold by reading the value
+   * Initialize TSI wakeup threshold by reading the value
    * of touchRead + 256. While sleeping the TSI value 
    * will have to be greater than this value to wake the
    * mcu. Make sure you are not touching the electrode

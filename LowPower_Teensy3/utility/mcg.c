@@ -19,30 +19,40 @@ void pee_blpe(void) {
     if (mcg_mode() != PEE) return;
     // first move from PEE to PBE
     MCG_C1 |= MCG_C1_CLKS(2); // select external reference clock as MCG_OUT
-
     // Wait for clock status bits to update indicating clock has switched
     while ((MCG_S & MCG_S_CLKST_MASK) != MCG_S_CLKST(2)) ;
     MCG_C2 |= MCG_C2_LP; // set the LP bit to enter BLPI
-    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(7)|SIM_CLKDIV1_OUTDIV2(7)|SIM_CLKDIV1_OUTDIV4(0x0F);
+    //mcg_cpu(0x0F, 0x0F, 0x0F, 5999);
+    //SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(0x01)|SIM_CLKDIV1_OUTDIV2(0x01)|SIM_CLKDIV1_OUTDIV4(0x01);
+    //SYST_RVR = 7999;
 }
 
 void blpe_pee(void) {
     if (mcg_mode() != BLPE) return;
     MCG_C5 = MCG_C5_PRDIV0(3);
     MCG_C6 =  MCG_C6_PLLS | MCG_C6_VDIV0(0); // update MCG_C6
-    
     // Now that PLL is configured, LP is cleared to enable the PLL
     MCG_C2 &= ~MCG_C2_LP_MASK;
-    
     // wait for PLLST status bit to set
     while (!(MCG_S & MCG_S_PLLST)) ;
     while (!(MCG_S & MCG_S_LOCK0)) ;
-   
-    // now in PBE
+    // configure the clock dividers back again before switching to the PLL to
+    // ensure the system clock speeds are in spec.
+#if F_CPU == 96000000
+    // config divisors: 96 MHz core, 48 MHz bus, 24 MHz flash
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(0) | SIM_CLKDIV1_OUTDIV2(1) |  SIM_CLKDIV1_OUTDIV4(3);
+#elif F_CPU == 48000000
+    // config divisors: 48 MHz core, 48 MHz bus, 24 MHz flash
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(1) | SIM_CLKDIV1_OUTDIV2(1) |  SIM_CLKDIV1_OUTDIV4(3);
+#elif F_CPU == 24000000
+    // config divisors: 24 MHz core, 24 MHz bus, 24 MHz flash
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(3) | SIM_CLKDIV1_OUTDIV2(3) |  SIM_CLKDIV1_OUTDIV4(3);
+#else
+#error "Error, F_CPU must be 96000000, 48000000, or 24000000"
+#endif
+    // now in PEE
     MCG_C1 = MCG_C1_CLKS(0);
-    // wait for PLL clock to be used
-    while ((MCG_S & MCG_S_CLKST_MASK) != MCG_S_CLKST(3)) ;
-    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(1)|SIM_CLKDIV1_OUTDIV2(1)|SIM_CLKDIV1_OUTDIV4(3);
+    SYST_RVR = (F_CPU / 1000) - 1;
 }
     
 void pee_blpi(void) {
@@ -56,9 +66,7 @@ void pee_blpi(void) {
     // make sure the FRDIV is configured to keep the FLL reference within spec.
     MCG_C1 &= ~MCG_C1_FRDIV_MASK; // clear FRDIV field
     MCG_C1 |= MCG_C1_FRDIV(4); // set FLL ref divider to 512
-    
     MCG_C6 &= ~MCG_C6_PLLS; // clear PLLS to select the FLL
-    
     while (MCG_S & MCG_S_PLLST){} // Wait for PLLST status bit to clear to
     // indicate switch to FLL output
     // now move to FBI mode
@@ -75,26 +83,12 @@ void pee_blpi(void) {
     while ((MCG_S & MCG_S_CLKST_MASK) != MCG_S_CLKST(1)) ;
     // now move to BLPI
     MCG_C2 |= MCG_C2_LP; // set the LP bit to enter BLPI
-    
     // set up the SIM clock dividers BEFORE switching to VLPR to ensure the
     // system clock speeds are in spec. MCGCLKOUT = 2 MHz in BLPI mode
     // core = 2 MHz, bus = 2 MHz, flash = 1 MHz
-    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(0) | SIM_CLKDIV1_OUTDIV2(0)
-    | SIM_CLKDIV1_OUTDIV4(1);
+    //SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(0) | SIM_CLKDIV1_OUTDIV2(0) | SIM_CLKDIV1_OUTDIV4(1);
     
-#if F_CPU == 96000000
-    // update the SysTick counter for 2 MHZ Clock
-    SYST_RVR = (F_CPU / 48000) - 1;
-#elif F_CPU == 48000000
-    // update the SysTick counter for 2 MHZ Clock
-    SYST_RVR = (F_CPU / 24000) - 1;
-#elif F_CPU == 24000000
-    // update the SysTick counter for 2 MHZ Clock
-    SYST_RVR = (F_CPU / 12000) - 1;
-#else
-#error "Error, F_CPU must be 96000000, 48000000, or 24000000"
-    SYST_RVR = 1999;
-#endif
+    //SYST_RVR = 1999;
 }
 
 void blpi_pee(void) {
@@ -223,3 +217,13 @@ unsigned char mcg_mode(void) {
         return 0;                                                            // error condition
     }
 }
+
+unsigned char mcg_cpu(uint8_t cpu_div, uint8_t bus_div, uint8_t mem_div, uint32_t syst) {
+    // config divisors: cpu_div, bus_div, mem_div
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(cpu_div) | SIM_CLKDIV1_OUTDIV2(bus_div) |	 SIM_CLKDIV1_OUTDIV4(mem_div);
+    SYST_RVR = syst;
+}
+
+
+
+

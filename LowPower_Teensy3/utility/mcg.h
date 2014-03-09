@@ -33,6 +33,7 @@ extern "C" {
     void blpe_pee(void);
     void pbe_pee(void);
     unsigned char mcg_mode(void);
+    unsigned char mcg_cpu(uint8_t cpu, uint8_t bus, uint8_t mem, uint32_t syst);
 #ifdef __cplusplus
 }
 #endif

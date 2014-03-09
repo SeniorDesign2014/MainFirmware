@@ -8,7 +8,7 @@
 /********************************************************************/
 #include "mk20dx128.h"
 #include "mk20dx128_ext.h"
-//#include "Arduino.h"
+
 /********************************************************************/
 // module_enable defines
 #define LLWU_LPTMR_MOD      0x10000
@@ -29,10 +29,14 @@
 #define LLWU_PIN_7          0x2000
 #define LLWU_PIN_9          0x80
 #define LLWU_PIN_10         0x100
-#define LLWU_PIN_11         0x400
+#define LLWU_PIN_11         0x200
+#define LLWU_PIN_13         0x400
 #define LLWU_PIN_16         0x20
 #define LLWU_PIN_21         0x8000
 #define LLWU_PIN_22         0x40
+#define LLWU_PIN_26         0x01
+#define LLWU_PIN_30         0x800
+#define LLWU_PIN_33         0x02
 /********************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +46,7 @@ extern "C" {
     void llwu_reset_enable(void);
     void llwu_configure(uint32_t pin_en, uint8_t rise_fall, uint32_t module_en);
     void llwu_configure_filter(unsigned int wu_pin_num, unsigned char filter_en, unsigned char rise_fall );
-    uint32_t llwu_clear_flags(void);
+    volatile  uint32_t llwu_clear_flags(void);
 #ifdef __cplusplus
 }
 #endif

@@ -3,6 +3,7 @@
  *  Teensy3
  *
  */
+
 #ifndef __LPTMR_H__
 #define __LPTMR_H__
 /********************************************************************/
@@ -16,7 +17,8 @@ extern "C" {
 #endif
     // function prototypes
     /* Low Power Timer LPTM Functions */
-    void lptmr_start(float period);// Start the LPTMR Timer in msec
+    void lptmr_init(void);
+    void lptmr_start(uint32_t period);// Start the LPTMR Timer in msec
     void lptmr_stop(void);// Stop LPTM timer
 #ifdef __cplusplus
 }

@@ -15,7 +15,7 @@ static const uint8_t tsi_pins[] = {
     255, 255,  11,   5
 };
 
-boolean tsi_sleep(uint8_t pin, uint16_t threshold) {
+boolean tsi_init(uint8_t pin, uint16_t threshold) {
     boolean error = false;
     if ( tsi_pins[pin] == 255) { error = true; return error; }
     

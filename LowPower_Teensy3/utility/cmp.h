@@ -1,11 +1,11 @@
 /*
- *  rtc.h
+ *  cmp.h
  *  Teensy3
  *
  */
 
-#ifndef __RTC_H__
-#define __RTC_H__
+#ifndef __CMP_H__
+#define __CMP_H__
 /********************************************************************/
 #include "mk20dx128.h"
 #include "mk20dx128_ext.h"
@@ -15,10 +15,10 @@
 extern "C" {
 #endif
     // function prototypes
-    void rtc_alarm(unsigned long sec);
-    void rtc_stop(void);
+    void cmp_init();
+    void cmp_stop(void);
 #ifdef __cplusplus
 }
 #endif
 /********************************************************************/
-#endif /* __RTC_H__ */
+#endif /* __CMP_H__ */
