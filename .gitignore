@@ -4,3 +4,4 @@ secret.h
 #ignore build files
 /*.o
 /*.d
+/*.swp
