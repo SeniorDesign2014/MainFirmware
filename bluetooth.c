@@ -21,10 +21,11 @@ char bt_write_flag = 0;
 char bt_whitelist_flag = 0;
 char bt_set_mode_flag = 0;
 char bt_connected_flag = 0;
-char bt_armed = 0;
-char bt_sound = 0;
-char bt_sound_select = 0;
-char bt_sound_delay = 0;
+char bt_armed = '0';
+char bt_sound = '0';
+char bt_sound_select = '0';
+char bt_sound_delay = '0';
+char bt_sound_test = '0';
 char bt_new_data = 0; 
 
 char bt_serial_out[] = {0x0D, 0x00, 0x09, 0x02, 0x00, 0x14, 0x00, 0x00, 0x05, 0x30, 0x30, 0x30, 0x30, 0x30};
@@ -182,6 +183,8 @@ void bluetooth_update(){
 								simplePrint("New data!\n");
 								#endif
 								bt_new_data = 1;
+								bt_sound_test = data[7];
+								usb_serial_putchar(bt_sound_test);
 								bt_armed = data[8];
 								usb_serial_putchar(bt_armed);
 								bt_sound = data[9];
