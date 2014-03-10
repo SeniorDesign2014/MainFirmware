@@ -27,31 +27,39 @@ int gps_parse(struct location* data){
 		if(rx_buf[6] == ','){
 			//invalid data
 			return(-1);
-			}
+		}
 		
-		for(i=0; i<3; i++){
-			if(rx_buf[17] == 'S'){
-				data->lat[i] = '-';
-				i++;
-			}
-			data->lat[i] = rx_buf[7+i];
-			}
+		//latitude
+		if(rx_buf[17] == 'S'){
+			data->lat[0] = '-';
+		}else{
+			data->lat[0] = '0';
+		}
+		for(i=1; i<3; i++){
+			data->lat[i] = rx_buf[6+i];
+		}
+		data->lat[3] = '\0';
 
-		for(i=0; i<8; i++){
+		for(i=0; i<7; i++){
 			data->lat_min[i] = rx_buf[8+i];
-			}
+		}
+		data->lat_min[7] = '\0';
 			
-		for(i=0; i<4; i++){
-			if(rx_buf[17] == 'S'){
-				data->lon[i] = '-';
-				i++;
-			}
-			data->lon[i] = rx_buf[19+i];
-			}
+		//longitude 
+		if(rx_buf[31] == 'E'){
+			data->lon[0] = '-';
+		}else{
+			data->lon[0] = '0';
+		}
+		for(i=1; i<4; i++){
+			data->lon[i] = rx_buf[18+i];
+		}
+		data->lon[4] = '\0';
 		
-		for(i=0; i<8; i++){
+		for(i=0; i<7; i++){
 			data->lon_min[i] = rx_buf[22+i];
-			}
+		}
+		data->lon_min[7] = '\0';
 		return(1);
 	}
 
@@ -62,7 +70,8 @@ int gps_parse(struct location* data){
 			}
 		for(i=0; i< 5; i++){
 			data->vel[i] = rx_buf[20+i];
-			}
+		}
+		data->vel[5] = '\0';
 		return(2);
 	}
 
@@ -125,4 +134,8 @@ void gps_wake(void){
 void gps_end(void){
 	gps_pwrdwn();
 	serial2_end();
+}
+
+void gps_pack_message(char* message, struct location* data, char stolen){
+	sprintf(message, "{\"clientid\":\"00000001\",\"x\":\"%s\",\"xm\":\"%s\",\"y\":\"%s\",\"ym\":\"%s\",\"vel\":\"%s\",\"stolen\":\"%c\"}", data->lat, data->lat_min, data->lon, data->lon_min, data->vel, stolen); 
 }
