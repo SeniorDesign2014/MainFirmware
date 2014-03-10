@@ -15,11 +15,11 @@ extern "C" {
 
 /*Nick makes a struct!*/
 struct location{
-	char lat[3];
-	char lon[4];
-	char lat_min[7];
-	char lon_min[7];
-	char vel[5];
+	char lat[4];
+	char lon[5];
+	char lat_min[8];
+	char lon_min[8];
+	char vel[6];
 	//char deg[5];
 };
 
@@ -31,7 +31,7 @@ void gps_pwrdwn(void);
 void gps_sleep(void);
 void gps_wake(void);
 void gps_end(void);
-void pack_message(char* message, struct location* data, char* stolen);
+void gps_pack_message(char* message, struct location* data, char stolen);
 #ifdef __cplusplus
 }
 #endif

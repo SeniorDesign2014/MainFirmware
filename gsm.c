@@ -85,8 +85,7 @@ void  gsm_end(void){
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-int8_t gsm_send_sms(char *phonenumber, char *message)
-{
+int8_t gsm_send_sms(char *phonenumber, char *message){
 	int8_t success;
 	int size;
 	char cmd1[24];
@@ -137,8 +136,7 @@ int8_t gsm_send_sms(char *phonenumber, char *message)
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-int8_t gsm_write(char *cmd, int len)
-{
+int8_t gsm_write(char *cmd, int len){
 	uint8_t character_counter, timeout_seconds;
 	char received[RECEIVE_LIMIT + 1];
 	char print_status[RECEIVE_LIMIT + len - 1 + 39];

@@ -209,11 +209,11 @@ int main(void){
 				}
 				//send GSM data every 2 min 
 				if(gsm_counter >= 480){ 
-					simplePrint("I'll be texting you shortly.");
+					simplePrint("I'll be texting you shortly; ");
 					//if data is valid, cleverly and secretly pack the message
 					if(gps_lock){
-						pack_message(gsm_message, gps_lat, gps_long, gps_vel, alarmed);
-						simplePrint("Packed you a secret message.\n");
+						gps_pack_message(gsm_message, &gps_loc, alarmed);
+						simplePrint("packed you a secret message.\n");
 						simplePrint(gsm_message);
 						if(text_lock){
 							text_lock = 0;
@@ -262,13 +262,13 @@ int main(void){
 		digitalWriteFast(LED_BUILTIN, LOW);
 		delay(30);
 		digitalWriteFast(LED_BUILTIN, HIGH);
-		*/
 		
 		if(debug_command == 'b'){
 			simplePrint("Setting up Bluetooth.../n");
 			bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
 			debug_command = 0;
 		}
+		*/
 		if(debug_command == 'w'){
 			bluetooth_write(secret, armed, sound, sound_sel, sound_delay);
 			debug_command = 0;
@@ -284,23 +284,6 @@ int main(void){
 			debug_command = 0;
 		}
 		
-		if(debug_command == 'n'){
-			
-			int response = -1;
-			while(response != 0){
-				response = motion_init();
-				if(response == 0){
-					simplePrint("Everything Worked!\n");
-				}else{
-					simplePrint("nothing worked\n");
-				}
-			}
-			
-			motion_calibrate();
-
-			debug_command = 0;
-		}
-		
 		if(debug_command == 'a'){
 			if(armed == '1'){
 				armed = '0';
@@ -313,17 +296,6 @@ int main(void){
 			}
 			debug_command = 0;
 		}
-		if(debug_command == '0'){
-			bt_armed = 1;
-			bt_new_data = 1;
-			debug_command = 0;
-		}
-		if(debug_command == '1'){
-			bt_armed = 0;
-			bt_new_data = 1;
-			debug_command = 0;
-		}
-		
 	}
 	
 	return(0);
