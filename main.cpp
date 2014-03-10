@@ -17,6 +17,7 @@ This is the integrated file.
 #include "secret.h"
 #include "HardwareSerial.h"
 #include "MPU6050.h"
+#include "Tone.h"
 //this is a common header for functions used in several c files ex. simpleprint
 #include "common.h"		
 
@@ -44,7 +45,7 @@ enum states {
 
 //variables for GSM
 char gsm_message[255] = "";
-int gsm_counter = 479;
+int gsm_counter = 460;
 int text_lock = 0;
 
 //variables for GPS
@@ -64,7 +65,10 @@ char motion_check = 0;
 int bt_broadcasting = 0;
 
 //variables for audio
-
+int audio_time_elapsed = 0;
+int audio_test_time = 20;
+uint16_t audio_frequency[5] = {1000, 2222, 5000, 10000, 15000};
+int audio_delay[] = {0, 240, 480, 720}; 
 
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
@@ -76,6 +80,7 @@ int main(void){
 	bluetooth_init();
 	motion_init();
 	motion_calibrate();
+	tone_init();
 
 	bluetooth_reset();
 	delay(250);
@@ -97,14 +102,6 @@ int main(void){
 			bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
 			bt_new_data = 0;
 		}
-		/*
-		if(bt_connected_flag != 1){
-			if(bt_set_mode_flag == 0){
-				bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
-				simplePrint("Setting up BT\n");
-			}
-		}
-		*/
 
 		//state machine
 		switch(state){
@@ -113,7 +110,10 @@ int main(void){
 				simplePrint("DISARMING\n");
 				gps_end();
 				gsm_end();
-				//TODO: shut down audio
+				if(sound_test == '0'){
+					tone_end();
+					audio_time_elapsed = 0;
+				}
 				state = STATE_DISARMED;
 				
 			break;
@@ -121,6 +121,21 @@ int main(void){
 				simplePrint("DISARMED\n");
 				if(armed == '1'){state = STATE_ARMING;}
 				
+				if(sound_test == '1'){
+					simplePrint("TESTING SOUND\n");
+					tone_begin(audio_frequency[sound - ASCII], 250);
+					audio_test_time--;
+
+					if(audio_test_time == 0){
+						audio_test_time = 20;
+						sound_test = '0';
+						bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
+					}
+					
+					tone_end();
+					audio_time_elapsed = 0;
+				}
+
 				//TODO: sleep micro
 				delay(250);
 
@@ -229,7 +244,15 @@ int main(void){
 					gsm_counter = 0; //reset counter
 				}else{ gsm_counter++;}
 
-				//TODO: audio (with correct settings)
+				//audio (with correct settings)
+				if(sound == '1'){
+					simplePrint("PLAYING SOUND");
+					if(audio_time_elapsed >= audio_delay[sound_delay - ASCII]){
+						tone_begin(audio_frequency[sound - ASCII], 250);
+					}else{
+						audio_time_elapsed++;
+					}
+				}
 				
 				if(armed == '0'){state = STATE_DISARMING;}
 
