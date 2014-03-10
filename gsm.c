@@ -23,14 +23,26 @@
 	Instantiates serial interface 3.
 	Calls gsm_init, which prints data to the USB serial interface.
 	This function can safely be called multiple times.
+	
+	Arguments:
+        0: Don't reset module
+        1: Reset module
 
 	Return values:
 	1: success
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-int8_t gsm_init(void)
+int8_t gsm_init(uint8_t option)
 {
+	//Reset module if previously shut down.
+	if(option == 1){
+		pinMode(6, OUTPUT);
+		digitalWriteFast(6, HIGH);
+		delay(2);
+		digitalWriteFast(6, LOW);
+		
+	}
 	//Activate serial interface
 	serial3_begin(BAUD2DIV(115200));
 	serial_format(SERIAL_8N1);
@@ -61,9 +73,10 @@ int8_t gsm_init(void)
 	A funtion to close the serial 3 interface
 
 	Return Values:
-	None.
+	1 if successful, otherwise failed.
 */
-void  gsm_end(void){
+int8_t  gsm_end(void){
+	int8_t err = gsm_write("AT#SYSHALT=0,0", 14); 
 	serial3_end();
 }
 

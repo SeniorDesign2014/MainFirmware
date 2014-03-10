@@ -189,7 +189,7 @@ int main(void){
 				simplePrint("ALARMING\n");
 				gps_wake();
 				
-				if(gsm_init() != 1){
+				if(gsm_init(0) != 1){
 					simplePrint("ERROR - GSM did not init. Have a nice day.\n");
 				}
 				

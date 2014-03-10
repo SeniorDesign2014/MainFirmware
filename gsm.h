@@ -37,13 +37,17 @@ extern "C"{
 	in this file.
 	Calls gsm_init, which prints data to the USB serial interface.
 	This function can safely be called multiple times.
+	
+	Arguments:
+	0: Don't reset module
+	1: Reset module
 
 	Return values:
 	1: success
 	0: timeout (no response from GSM module)
 	-1: Unexpected response from GSM module
 */
-int8_t gsm_init(void);
+int8_t gsm_init(uint8_t option);
 
 /*
 	gsm_send_sms
@@ -72,9 +76,9 @@ int8_t gsm_send_sms(char *phonenumber, char *message);
 	This is where power state will be controlled too, if implemented.
 
 	Return values:
-	None
+	1 if success, 0 means failure
 */
-void gsm_end(void);
+int8_t gsm_end(void);
 
 
 /*
