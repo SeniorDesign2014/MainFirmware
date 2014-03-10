@@ -5,3 +5,5 @@ secret.h
 /*.o
 /*.d
 /*.swp
+/*.hex
+/*.elf
