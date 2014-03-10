@@ -28,10 +28,11 @@ This is the integrated file.
 int state = 0;
 char alarmed = '0';
 char armed = '0';
-char secret = '0';
 char sound = '0';
 char sound_sel = '0';
 char sound_delay = '0';
+char sound_test = '0';
+
 enum states {
 	STATE_DISARMING,
 	STATE_DISARMED,
@@ -49,7 +50,9 @@ int text_lock = 0;
 //variables for GPS
 int gps_lock = -1;
 int gps_ret = -1;
+int gps_index = 0;
 struct location gps_loc;
+struct location gps_temp;
 
 //variable for motion
 char motion_redundancy[MOTION_REDUNDANCY_COUNT];
@@ -60,12 +63,14 @@ char motion_check = 0;
 //variables for bluetooth
 int bt_broadcasting = 0;
 
+//variables for audio
+
+
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
 char debug_output[255];
 
 int main(void){
-	//pinMode(2, OUTPUT);
 
 	//perform start up
 	bluetooth_init();
@@ -75,20 +80,6 @@ int main(void){
 	bluetooth_reset();
 	delay(250);
 	bluetooth_update();
-	/*
-	bluetooth_reset();
-	delay(25);
-	bluetooth_update();
-	delay(25);
-	bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
-	delay(25);
-	bluetooth_update();
-	delay(25);
-	bluetooth_write('0', '0', '0', '0', '0');
-	delay(25);
-	bluetooth_update();
-	delay(25);
-	*/
 
 	//TODO: implement bluetooth whitleist
 	
@@ -101,8 +92,9 @@ int main(void){
 			sound = bt_sound;
 			sound_sel = bt_sound_select;
 			sound_delay = bt_sound_delay;
+			sound_test = bt_sound_test;
 			
-			bluetooth_write(secret, armed, sound, sound_sel, sound_delay);
+			bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
 			bt_new_data = 0;
 		}
 		/*
@@ -147,11 +139,13 @@ int main(void){
 				//poll GPS until lock has been established
 				if(gps_lock <= 0){
 					//get GPS data
-					gps_ret = gps_parse(&gps_loc);
+					gps_ret = gps_parse(&gps_temp);
 					if(gps_ret > 0){
 						gps_lock = 1;
+						simplePrint("valid - ");
 					}else if(gps_ret < 0){
 						gps_lock = 0;	
+						simplePrint("invalid - ");
 					}
 
 					if(gps_lock > 0){
@@ -201,12 +195,21 @@ int main(void){
 				simplePrint("ALARMED\n");
 				
 				//get GPS data
-				gps_ret = gps_parse(&gps_loc);
+				gps_ret = gps_parse(&gps_temp);
 				if(gps_ret > 0){
 					gps_lock = 1;
+					for(gps_index=0;gps_index<4;gps_index++){ gps_loc.lat[gps_index] = gps_temp.lat[gps_index];}
+					for(gps_index=0;gps_index<8;gps_index++){ gps_loc.lat_min[gps_index] = gps_temp.lat_min[gps_index];}
+					for(gps_index=0;gps_index<5;gps_index++){ gps_loc.lon[gps_index] = gps_temp.lon[gps_index];}
+					for(gps_index=0;gps_index<8;gps_index++){ gps_loc.lon_min[gps_index] = gps_temp.lon_min[gps_index];}
+					for(gps_index=0;gps_index<6;gps_index++){ gps_loc.vel[gps_index] = gps_temp.vel[gps_index];}
+					simplePrint("valid - ");
+
 				}else if(gps_ret < 0){
 					gps_lock = 0;	
+					simplePrint("invalid - ");
 				}
+
 				//send GSM data every 2 min 
 				if(gsm_counter >= 480){ 
 					simplePrint("I'll be texting you shortly; ");
@@ -268,9 +271,8 @@ int main(void){
 			bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
 			debug_command = 0;
 		}
-		*/
 		if(debug_command == 'w'){
-			bluetooth_write(secret, armed, sound, sound_sel, sound_delay);
+			bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
 			debug_command = 0;
 		}
 		if(debug_command == 'i'){
@@ -283,7 +285,8 @@ int main(void){
 			simplePrint("I2C has initialized!\n");
 			debug_command = 0;
 		}
-		
+		*/
+
 		if(debug_command == 'a'){
 			if(armed == '1'){
 				armed = '0';

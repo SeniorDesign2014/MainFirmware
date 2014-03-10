@@ -31,6 +31,7 @@ extern char bt_armed;
 extern char bt_sound;
 extern char bt_sound_select;
 extern char bt_sound_delay;
+extern char bt_sound_test;
 extern char bt_new_data;
 
 //Call this first!
