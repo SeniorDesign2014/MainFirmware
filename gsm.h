@@ -76,9 +76,9 @@ int8_t gsm_send_sms(char *phonenumber, char *message);
 	This is where power state will be controlled too, if implemented.
 
 	Return values:
-	1 if success, 0 means failure
+	None.
 */
-int8_t gsm_end(void);
+void gsm_end(void);
 
 
 /*
@@ -100,6 +100,18 @@ int8_t gsm_end(void);
 	-1: Unexpected response from GSM module
 */
 int8_t gsm_write(char *cmd, int len);
+
+/*
+	gsm_write_end
+
+	A blocking function that sends a command to the GSM module.
+	Prints the result to the USB serial interface. Differs from
+	gsm_write by not expecting a return command from the module.
+
+	Return values:
+	None.
+*/
+void gsm_write_end(char *cmd, int len);
 
 /*
 	gsm_verify_response
