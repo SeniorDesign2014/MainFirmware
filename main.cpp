@@ -71,6 +71,7 @@ uint16_t audio_frequency[5] = {500, 1000, 1500, 2500, 5000};
 int audio_delay[] = {0, 240, 480, 720}; 
 int audio_pattern_count = 0;
 int audio_pattern[5][4] = {{250, 250, 250, 250}, {500, 500, 500, 500}, {250, 250, 250, 0}, {500, 500, 0, 0}, {300, 100, 300, 100}};
+int audio_timeout = 0;
 
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
@@ -160,9 +161,13 @@ int main(void){
 				if(gps_lock <= 0){
 					//get GPS data
 					gps_ret = gps_parse(&gps_temp);
-					if(gps_ret > 0){
+					if(gps_ret == 1){
 						gps_lock = 1;
-						simplePrint("valid - ");
+						for(gps_index=0;gps_index<4;gps_index++){ gps_loc.lat[gps_index] = gps_temp.lat[gps_index];}
+						for(gps_index=0;gps_index<8;gps_index++){ gps_loc.lat_min[gps_index] = gps_temp.lat_min[gps_index];}
+						for(gps_index=0;gps_index<5;gps_index++){ gps_loc.lon[gps_index] = gps_temp.lon[gps_index];}
+						for(gps_index=0;gps_index<8;gps_index++){ gps_loc.lon_min[gps_index] = gps_temp.lon_min[gps_index];}
+						simplePrint("valid location - ");
 					}else if(gps_ret < 0){
 						gps_lock = 0;	
 						simplePrint("invalid - ");
@@ -216,15 +221,17 @@ int main(void){
 				
 				//get GPS data
 				gps_ret = gps_parse(&gps_temp);
-				if(gps_ret > 0){
+				if(gps_ret == 1){
 					gps_lock = 1;
 					for(gps_index=0;gps_index<4;gps_index++){ gps_loc.lat[gps_index] = gps_temp.lat[gps_index];}
 					for(gps_index=0;gps_index<8;gps_index++){ gps_loc.lat_min[gps_index] = gps_temp.lat_min[gps_index];}
 					for(gps_index=0;gps_index<5;gps_index++){ gps_loc.lon[gps_index] = gps_temp.lon[gps_index];}
 					for(gps_index=0;gps_index<8;gps_index++){ gps_loc.lon_min[gps_index] = gps_temp.lon_min[gps_index];}
-					for(gps_index=0;gps_index<6;gps_index++){ gps_loc.vel[gps_index] = gps_temp.vel[gps_index];}
-					simplePrint("valid - ");
+					simplePrint("valid location - ");
 
+				}else if(gps_ret == 2){
+					for(gps_index=0;gps_index<6;gps_index++){ gps_loc.vel[gps_index] = gps_temp.vel[gps_index];}
+					simplePrint("valid velocity - ");
 				}else if(gps_ret < 0){
 					gps_lock = 0;	
 					simplePrint("invalid - ");
@@ -234,7 +241,14 @@ int main(void){
 				if(gsm_counter >= 480){ 
 					simplePrint("I'll be texting you shortly; ");
 					//if data is valid, cleverly and secretly pack the message
+					//TODO: put in timeout
 					if(gps_lock){
+						simplePrint(gps_loc.lat);
+						simplePrint(gps_loc.lat_min);
+						simplePrint(gps_loc.lon);
+						simplePrint(gps_loc.lon_min);
+						simplePrint(gps_loc.vel);
+						
 						gps_pack_message(gsm_message, &gps_loc, alarmed);
 						simplePrint("packed you a secret message.\n");
 						simplePrint(gsm_message);
@@ -245,8 +259,8 @@ int main(void){
 						gsm_counter = 0; //reset counter
 					}else{
 						simplePrint("No GPS lock\n");
-
 					}
+
 				}else{ gsm_counter++;}
 
 				//audio (with correct settings)
@@ -256,6 +270,12 @@ int main(void){
 						tone_begin(audio_frequency[sound_sel - ASCII], audio_pattern[sound_sel][audio_pattern_count]);
 						audio_pattern_count++;
 						if(audio_pattern_count == 4){ audio_pattern_count = 0;}
+
+						audio_timeout++;
+						if(audio_timeout >= 1200){
+							audio_timeout = 0;
+							sound = '0';
+						}
 					}else{
 						audio_time_elapsed++;
 					}

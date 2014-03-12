@@ -15,14 +15,14 @@ int gps_parse(struct location* data){
 	if(buf == 0x24){
 		while(rx_buf[i-1] != 0x0A){
 			buf = serial2_getchar();
+			//usb_serial_putchar(buf);
 			if(buf != -1){
 				rx_buf[i] = buf;
 				i++;
 			}
 		}
 	}
-
-
+	
 	if(strncmp(rx_buf, "GPGLL", 5) == 0){
 		if(rx_buf[6] == ','){
 			//invalid data
@@ -36,17 +36,17 @@ int gps_parse(struct location* data){
 			data->lat[0] = '0';
 		}
 		for(i=1; i<3; i++){
-			data->lat[i] = rx_buf[6+i];
+			data->lat[i] = rx_buf[5+i];
 		}
 		data->lat[3] = '\0';
 
-		for(i=0; i<7; i++){
+		for(i=0; i<8; i++){
 			data->lat_min[i] = rx_buf[8+i];
 		}
-		data->lat_min[7] = '\0';
+		data->lat_min[8] = '\0';
 			
 		//longitude 
-		if(rx_buf[31] == 'E'){
+		if(rx_buf[31] == 'W'){
 			data->lon[0] = '-';
 		}else{
 			data->lon[0] = '0';
@@ -56,10 +56,10 @@ int gps_parse(struct location* data){
 		}
 		data->lon[4] = '\0';
 		
-		for(i=0; i<7; i++){
+		for(i=0; i<8; i++){
 			data->lon_min[i] = rx_buf[22+i];
 		}
-		data->lon_min[7] = '\0';
+		data->lon_min[8] = '\0';
 		return(1);
 	}
 
@@ -137,5 +137,5 @@ void gps_end(void){
 }
 
 void gps_pack_message(char* message, struct location* data, char stolen){
-	sprintf(message, "{\"clientid\":\"00000001\",\"x\":\"%s\",\"xm\":\"%s\",\"y\":\"%s\",\"ym\":\"%s\",\"vel\":\"%s\",\"stolen\":\"%c\"}", data->lat, data->lat_min, data->lon, data->lon_min, data->vel, stolen); 
+	sprintf(message, "\"clientid\":\"00000001\",\"x\":\"%s\",\"xm\":\"%s\",\"y\":\"%s\",\"ym\":\"%s\",\"vel\":\"%s\",\"stolen\":\"%c\"", data->lat, data->lat_min, data->lon, data->lon_min, data->vel, stolen); 
 }

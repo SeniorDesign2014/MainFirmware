@@ -17,8 +17,8 @@ extern "C" {
 struct location{
 	char lat[4];
 	char lon[5];
-	char lat_min[8];
-	char lon_min[8];
+	char lat_min[9];
+	char lon_min[9];
 	char vel[6];
 	//char deg[5];
 };
