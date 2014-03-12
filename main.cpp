@@ -46,7 +46,7 @@ enum states {
 //variables for GSM
 char gsm_message[255] = "";
 int gsm_counter = 460;
-int text_lock = 0;
+int text_lock = 2;
 
 //variables for GPS
 int gps_lock = -1;
@@ -67,8 +67,10 @@ int bt_broadcasting = 0;
 //variables for audio
 int audio_time_elapsed = 0;
 int audio_test_time = 20;
-uint16_t audio_frequency[5] = {1000, 2222, 5000, 10000, 15000};
+uint16_t audio_frequency[5] = {500, 1000, 1500, 2500, 5000};
 int audio_delay[] = {0, 240, 480, 720}; 
+int audio_pattern_count = 0;
+int audio_pattern[5][4] = {{250, 250, 250, 250}, {500, 500, 500, 500}, {250, 250, 250, 0}, {500, 500, 0, 0}, {300, 100, 300, 100}};
 
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
@@ -114,6 +116,7 @@ int main(void){
 					tone_end();
 					audio_time_elapsed = 0;
 				}
+				alarmed = '0';
 				state = STATE_DISARMED;
 				
 			break;
@@ -122,18 +125,20 @@ int main(void){
 				if(armed == '1'){state = STATE_ARMING;}
 				
 				if(sound_test == '1'){
-					simplePrint("TESTING SOUND\n");
-					tone_begin(audio_frequency[sound - ASCII], 250);
-					audio_test_time--;
+					simplePrint("TESTING SOUND: ");
+					usb_serial_putchar(sound_sel);
 
+					tone_begin(audio_frequency[sound_sel - ASCII], audio_pattern[sound_sel][audio_pattern_count]);
+					audio_pattern_count++;
+					if(audio_pattern_count == 4){ audio_pattern_count = 0;}
+
+					audio_test_time--;
 					if(audio_test_time == 0){
 						audio_test_time = 20;
+						tone_end();
 						sound_test = '0';
 						bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
 					}
-					
-					tone_end();
-					audio_time_elapsed = 0;
 				}
 
 				//TODO: sleep micro
@@ -233,22 +238,24 @@ int main(void){
 						gps_pack_message(gsm_message, &gps_loc, alarmed);
 						simplePrint("packed you a secret message.\n");
 						simplePrint(gsm_message);
-						if(text_lock){
-							text_lock = 0;
+						if(text_lock > 0){
+							text_lock--;
 							gsm_send_sms(SECRET_NUMBER, gsm_message);
 						}
-						
+						gsm_counter = 0; //reset counter
 					}else{
 						simplePrint("No GPS lock\n");
+
 					}
-					gsm_counter = 0; //reset counter
 				}else{ gsm_counter++;}
 
 				//audio (with correct settings)
 				if(sound == '1'){
 					simplePrint("PLAYING SOUND");
 					if(audio_time_elapsed >= audio_delay[sound_delay - ASCII]){
-						tone_begin(audio_frequency[sound - ASCII], 250);
+						tone_begin(audio_frequency[sound_sel - ASCII], audio_pattern[sound_sel][audio_pattern_count]);
+						audio_pattern_count++;
+						if(audio_pattern_count == 4){ audio_pattern_count = 0;}
 					}else{
 						audio_time_elapsed++;
 					}
@@ -265,9 +272,6 @@ int main(void){
 			default:
 				simplePrint("ERROR - INCORRECT STATE\n");
 		}
-	
-	
-	
 	
 	
 	
@@ -294,21 +298,18 @@ int main(void){
 			bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
 			debug_command = 0;
 		}
-		if(debug_command == 'w'){
-			bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
-			debug_command = 0;
-		}
-		if(debug_command == 'i'){
-			bluetooth_write('0','0','0','0','0');
-			debug_command = 0;
-		}
 		
-		if(debug_command == 'm'){
-			motion_init();
-			simplePrint("I2C has initialized!\n");
+		*/
+
+		if(debug_command == 't'){
+			sound_test = '1';
 			debug_command = 0;
 		}
-		*/
+
+		if(debug_command == '4'){
+			sound_sel = '4';
+			debug_command = 0;
+		}
 
 		if(debug_command == 'a'){
 			if(armed == '1'){
