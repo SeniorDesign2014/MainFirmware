@@ -169,7 +169,7 @@ int main(void){
 				simplePrint("ARMED\n");
 
 				//poll GPS until lock has been established
-				if(gps_lock <= 0){
+				if(gps_lock != 1){
 					//get GPS data
 					gps_ret = gps_parse(&gps_temp);
 					if(gps_ret == 1){
@@ -184,7 +184,7 @@ int main(void){
 						simplePrint("invalid - ");
 					}
 
-					if(gps_lock > 0){
+					if(gps_lock == 1){
 						gps_sleep();
 						simplePrint("GPS locked and sleeping\n");
 					}
@@ -232,6 +232,7 @@ int main(void){
 				
 				//get GPS data
 				gps_ret = gps_parse(&gps_temp);
+
 				if(gps_ret == 1){
 					gps_lock = 1;
 					for(gps_index=0;gps_index<4;gps_index++){ gps_loc.lat[gps_index] = gps_temp.lat[gps_index];}
@@ -241,6 +242,7 @@ int main(void){
 					simplePrint("valid location - ");
 
 				}else if(gps_ret == 2){
+					gps_lock = 0;	
 					for(gps_index=0;gps_index<6;gps_index++){ gps_loc.vel[gps_index] = gps_temp.vel[gps_index];}
 					simplePrint("valid velocity - ");
 				}else if(gps_ret < 0){
@@ -253,7 +255,7 @@ int main(void){
 					simplePrint("I'll be texting you shortly; ");
 					//if data is valid, cleverly and secretly pack the message
 					//TODO: put in timeout
-					if(gps_lock){
+					if(gps_lock == 1){
 						simplePrint(gps_loc.lat);
 						simplePrint(gps_loc.lat_min);
 						simplePrint(gps_loc.lon);
@@ -261,7 +263,7 @@ int main(void){
 						simplePrint(gps_loc.vel);
 						
 						gps_pack_message(gsm_message, &gps_loc, alarmed);
-						simplePrint("packed you a secret message.\n");
+						simplePrint("packed you a secret message: ");
 						simplePrint(gsm_message);
 						if(text_lock > 0){
 							text_lock--;
