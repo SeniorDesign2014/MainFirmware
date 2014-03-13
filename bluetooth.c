@@ -205,6 +205,7 @@ void bluetooth_update(){
 								simplePrint("Connected\n");
 								#endif
 								bt_connected_flag = 1;
+								bluetooth_write(bt_sound_test, bt_armed, bt_sound, bt_sound_select, bt_sound_delay);
 
 							break;
 							

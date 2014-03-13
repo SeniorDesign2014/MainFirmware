@@ -70,14 +70,17 @@ int audio_test_time = 20;
 uint16_t audio_frequency[5] = {500, 1000, 1500, 2500, 5000};
 int audio_delay[] = {0, 240, 480, 720}; 
 int audio_pattern_count = 0;
-int audio_pattern[5][4] = {{250, 250, 250, 250}, {500, 500, 500, 500}, {250, 250, 250, 0}, {500, 500, 0, 0}, {300, 100, 300, 100}};
+int audio_pattern[5][4] = {{250, 250, 250, 250}, {500, 500, 500, 500}, {250, 250, 250, 0}, {250, 250, 250, 250}, {300, 100, 300, 100}};
 int audio_timeout = 0;
 
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
 char debug_output[255];
+int led_toggle = 1;
 
 int main(void){
+
+	pinMode(LED_BUILTIN, OUTPUT);
 
 	//perform start up
 	bluetooth_init();
@@ -93,6 +96,14 @@ int main(void){
 	
 
 	for(;;){
+		if(led_toggle){
+			digitalWriteFast(LED_BUILTIN, LOW);
+			led_toggle = 0;
+		} else{
+			digitalWriteFast(LED_BUILTIN, HIGH);
+			led_toggle = 1;
+		}
+
 		//poll bluetooth every so often
 		bluetooth_update();
 		if(bt_new_data == 1){
@@ -308,10 +319,6 @@ int main(void){
 			debug_command = usb_serial_getchar();
 		}
 		/*
-		delay(100);
-		digitalWriteFast(LED_BUILTIN, LOW);
-		delay(30);
-		digitalWriteFast(LED_BUILTIN, HIGH);
 		
 		if(debug_command == 'b'){
 			simplePrint("Setting up Bluetooth.../n");
