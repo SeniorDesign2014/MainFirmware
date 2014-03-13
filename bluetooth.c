@@ -15,6 +15,11 @@ Author: Paul Burris
 #define BT_SET_MODE_BUF_SIZE 7
 #define BT_RESET_BUF_SIZE 6
 
+#define DEVICE_1 //TODO: FIX
+#define DEVICE_2 //TODO: FIX
+#define ADDR_TYPE //FIX
+
+
 #define USB_DEBUG
 
 char bt_write_flag = 0;
@@ -124,7 +129,10 @@ void bluetooth_update(){
 					case 0x00: //system
 						switch(method){
 							case 0x0A: //whitelist append
-								if((data[0] & data[1]) == 0){bt_whitelist_flag = 1;}
+								if((data[0] & data[1]) == 0){
+									bt_whitelist_flag = 1;
+									bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
+								}
 								else{bt_whitelist_flag = 0;}
 							break;
 						}
@@ -143,9 +151,6 @@ void bluetooth_update(){
 					case 0x06: //GAP
 						switch(method){
 							case 0x01: //set mode
-								#ifdef USB_DEBUG
-								simplePrint("Mode Set\n");
-								#endif
 								if((data[0] & data[1]) == 0){
 									bt_set_mode_flag = 1;
 									simplePrint("Mode Set\n");
@@ -171,7 +176,7 @@ void bluetooth_update(){
 							case 0x00: //bootup
 								simplePrint(" Boot!\n");
 								//TODO: fix
-								bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
+								bluetooth_whitelist_append(DEVICE_1, ADDR_TYPE);
 							break;
 						}
 					break;
