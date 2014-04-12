@@ -17,7 +17,7 @@ This is the integrated file.
 #include "secret.h"
 #include "HardwareSerial.h"
 #include "MPU6050.h"
-#include "Tone.h"
+#include "tone.h"
 //this is a common header for functions used in several c files ex. simpleprint
 #include "common.h"		
 
