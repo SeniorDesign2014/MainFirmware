@@ -46,7 +46,7 @@ enum states {
 //variables for GSM
 char gsm_message[255] = "";
 int gsm_counter = 460;
-int text_lock = 2;
+int text_lock = 5;
 
 //variables for GPS
 int gps_lock = -1;
@@ -55,7 +55,7 @@ int gps_index = 0;
 struct location gps_loc;
 struct location gps_temp;
 
-//variable for motion
+//variables for motion
 char motion_redundancy[MOTION_REDUNDANCY_COUNT];
 int motion_index = 0;
 int motion_i = 0; 
@@ -66,7 +66,7 @@ int bt_broadcasting = 0;
 
 //variables for audio
 int audio_time_elapsed = 0;
-int audio_test_time = 20;
+int audio_test_time = 10;
 uint16_t audio_frequency[5] = {500, 1000, 1500, 2500, 5000};
 int audio_delay[] = {0, 240, 480, 720}; 
 int audio_pattern_count = 0;
@@ -111,16 +111,27 @@ int main(void){
 		
 			case STATE_DISARMING:
 				simplePrint("DISARMING\n");
+  
+				//turn everything off
 				gps_end();
 				gsm_end();
-				if(sound_test == '0'){
-					tone_end();
-					audio_time_elapsed = 0;
-				}
+				tone_end();
+
+				//reset text lock
+				text_lock = 5;
+
+				//reset alarm variables
+				audio_time_elapsed = 0;
+				audio_timeout = 0;
 				alarmed = '0';
-				state = STATE_DISARMED;
 				
+				//reset sound test variables
+				sound_test = '0';
+				audio_test_time = 10;
+				bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
+				state = STATE_DISARMED;
 			break;
+				
 			case STATE_DISARMED:
 				simplePrint("DISARMED\n");
 				if(armed == '1'){state = STATE_ARMING;}
@@ -131,11 +142,11 @@ int main(void){
 
 					tone_begin(audio_frequency[sound_sel - ASCII], audio_pattern[sound_sel][audio_pattern_count]);
 					audio_pattern_count++;
-					if(audio_pattern_count == 4){ audio_pattern_count = 0;}
+					if(audio_pattern_count >= 4){ audio_pattern_count = 0;}
 
 					audio_test_time--;
-					if(audio_test_time == 0){
-						audio_test_time = 20;
+					if(audio_test_time <= 0){
+						audio_test_time = 10;
 						tone_end();
 						sound_test = '0';
 						bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
@@ -151,6 +162,18 @@ int main(void){
 				simplePrint("ARMING\n");
 				motion_arm_position();
 				gps_init();
+				tone_end();
+
+				//reset alarm variables
+				audio_time_elapsed = 0;
+				audio_timeout = 0;
+				alarmed = '0';
+				
+				//reset sound test variables
+				sound_test = '0';
+				audio_test_time = 10;
+				bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
+
 				state = STATE_ARMED;
 			break;
 			
@@ -269,12 +292,13 @@ int main(void){
 					if(audio_time_elapsed >= audio_delay[sound_delay - ASCII]){
 						tone_begin(audio_frequency[sound_sel - ASCII], audio_pattern[sound_sel][audio_pattern_count]);
 						audio_pattern_count++;
-						if(audio_pattern_count == 4){ audio_pattern_count = 0;}
+						if(audio_pattern_count >= 4){ audio_pattern_count = 0;}
 
 						audio_timeout++;
 						if(audio_timeout >= 1200){
 							audio_timeout = 0;
 							sound = '0';
+							bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
 						}
 					}else{
 						audio_time_elapsed++;
