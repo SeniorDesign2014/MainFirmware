@@ -84,6 +84,7 @@ int main(void){
 	motion_init();
 	motion_calibrate();
 	tone_init();
+	gps_init();
 
 	bluetooth_reset();
 	delay(250);
@@ -233,6 +234,9 @@ int main(void){
 				
 				if(gsm_init(0) != 1){
 					simplePrint("ERROR - GSM did not init. Have a nice day.\n");
+				}else{
+					gps_pack_message(gsm_message, &gps_loc, alarmed);
+					gsm_send_sms(SECRET_NUMBER, gsm_message);
 				}
 				
 				state = STATE_ALARMED;

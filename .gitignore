@@ -1,5 +1,6 @@
 #Ignore secret file so we don't give out the real number
 secret.h
+main.hex
 
 #ignore build files
 /*.o

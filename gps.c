@@ -91,6 +91,7 @@ void gps_init(void){
 
 	//Powers up GPS module if it was told to turn off
 	gps_pwrup();
+	delay(500);
 
 	//Quiet extra message
 	serial2_write("$PUBX,40,GGA,0,0,0,0*5A\r\n", 25);
