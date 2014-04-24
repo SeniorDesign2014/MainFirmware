@@ -79,6 +79,12 @@ char debug_output[255];
 
 int main(void){
 
+	//initialize pin configurations
+	pinMode(A1, OUTPUT);
+	pinMode(A2, OUTPUT);
+	digitalWriteFast(A1, LOW);
+	digitalWriteFast(A2, LOW);
+
 	//perform start up
 	bluetooth_init();
 	motion_init();
