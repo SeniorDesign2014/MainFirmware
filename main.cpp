@@ -47,6 +47,7 @@ enum states {
 char gsm_message[255] = "";
 int gsm_counter = 460;
 int text_lock = 5;
+int gsm_did_init = 0;
 
 //variables for GPS
 int gps_lock = -1;
@@ -80,10 +81,11 @@ char debug_output[255];
 int main(void){
 
 	//initialize pin configurations
+	pinMode(LED_BUILTIN, OUTPUT);
 	pinMode(A1, OUTPUT);
 	pinMode(A2, OUTPUT);
 	digitalWriteFast(A1, LOW);
-	digitalWriteFast(A2, LOW);
+	digitalWriteFast(A2, HIGH);
 
 	//perform start up
 	bluetooth_init();
@@ -123,6 +125,7 @@ int main(void){
 				gps_end();
 				gsm_end();
 				tone_end();
+				//digitalWriteFast(A1, HIGH);
 
 				//reset text lock
 				text_lock = 5;
@@ -167,9 +170,11 @@ int main(void){
 			
 			case STATE_ARMING:
 				simplePrint("ARMING\n");
-				motion_arm_position();
-				gps_init();
 				tone_end();
+				motion_arm_position();
+
+				//turn on big boys
+				//digitalWriteFast(A1, LOW);
 
 				//reset alarm variables
 				audio_time_elapsed = 0;
@@ -238,12 +243,15 @@ int main(void){
 				simplePrint("ALARMING\n");
 				gps_wake();
 				
-				if(gsm_init(0) != 1){
+				//digitalWriteFast(LED_BUILTIN, HIGH);
+				gps_init();
+				gsm_did_init = gsm_init(1);
+				if(gsm_did_init != 1){
 					simplePrint("ERROR - GSM did not init. Have a nice day.\n");
-				}else{
-					gps_pack_message(gsm_message, &gps_loc, alarmed);
-					gsm_send_sms(SECRET_NUMBER, gsm_message);
 				}
+				delay(100);
+				gps_pack_message(gsm_message, &gps_loc, alarmed);
+				gsm_send_sms(SECRET_NUMBER, gsm_message);
 				
 				state = STATE_ALARMED;
 				
