@@ -35,11 +35,15 @@
 */
 int8_t gsm_init(uint8_t option)
 {
+	//turn on power gate
+	digitalWriteFast(A2, LOW);
+	delay(1000);
+
 	//Reset module if previously shut down.
 	if(option == 1){
 		pinMode(6, OUTPUT);
 		digitalWriteFast(6, HIGH);
-		delay(2);
+		delay(200);
 		digitalWriteFast(6, LOW);
 
 	}
@@ -76,7 +80,9 @@ int8_t gsm_init(uint8_t option)
 	1 if successful, otherwise failed.
 */
 void  gsm_end(void){
-	gsm_write_end("AT#SYSHALT=0,0", 14);
+	//turn off power gate
+	digitalWriteFast(A2, HIGH);
+	//gsm_write_end("AT#SYSHALT=0,0", 14);
 	serial3_end();
 }
 

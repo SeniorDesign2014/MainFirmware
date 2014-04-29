@@ -85,12 +85,16 @@ TODO: Shut off timepulse.
 void gps_init(void){
 	char cfg_tp5[] = { 0xB5, 0x62, 0x06, 0x31, 0x00, 0x00, 0x00, 0x00};
 
+	//turn on power gate
+	digitalWriteFast(A1, LOW);
+
 	//Initialize Serial2 Port
 	serial2_begin(BAUD2DIV(9600));
 	serial2_format(SERIAL_8N1);
 
 	//Powers up GPS module if it was told to turn off
 	gps_pwrup();
+	delay(500);
 
 	//Quiet extra message
 	serial2_write("$PUBX,40,GGA,0,0,0,0*5A\r\n", 25);
@@ -134,6 +138,10 @@ void gps_wake(void){
 
 void gps_end(void){
 	gps_pwrdwn();
+
+	//turn off power gate
+	digitalWriteFast(A1, HIGH);
+
 	serial2_end();
 }
 
