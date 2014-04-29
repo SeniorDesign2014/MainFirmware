@@ -125,7 +125,6 @@ int main(void){
 				gps_end();
 				gsm_end();
 				tone_end();
-				//digitalWriteFast(A1, HIGH);
 
 				//reset text lock
 				text_lock = 5;
@@ -174,7 +173,7 @@ int main(void){
 				motion_arm_position();
 
 				//turn on big boys
-				//digitalWriteFast(A1, LOW);
+				gps_init();
 
 				//reset alarm variables
 				audio_time_elapsed = 0;
@@ -241,15 +240,15 @@ int main(void){
 			
 			case STATE_ALARMING:
 				simplePrint("ALARMING\n");
+
+				//fire up wireless modules
+				gsm_did_init = gsm_init(0);
 				gps_wake();
 				
-				//digitalWriteFast(LED_BUILTIN, HIGH);
-				gps_init();
-				gsm_did_init = gsm_init(1);
 				if(gsm_did_init != 1){
 					simplePrint("ERROR - GSM did not init. Have a nice day.\n");
 				}
-				delay(100);
+				delay(2000);
 				gps_pack_message(gsm_message, &gps_loc, alarmed);
 				gsm_send_sms(SECRET_NUMBER, gsm_message);
 				
