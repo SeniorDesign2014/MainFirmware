@@ -5,7 +5,7 @@ Authors: Paul Burris, Nick Voigt, Russell Barnes
 
 This is the integrated file.
 **********************************/
-#include <stdio.h> 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "mk20dx128.h"
@@ -19,7 +19,8 @@ This is the integrated file.
 #include "MPU6050.h"
 #include "tone.h"
 //this is a common header for functions used in several c files ex. simpleprint
-#include "common.h"		
+#include "common.h"
+#include "LowPower_Teensy3.h"
 
 #ifndef SECRET_NUMBER
 #define SECRET_NUMBER 16668675309
@@ -59,7 +60,7 @@ struct location gps_temp;
 //variables for motion
 char motion_redundancy[MOTION_REDUNDANCY_COUNT];
 int motion_index = 0;
-int motion_i = 0; 
+int motion_i = 0;
 char motion_check = 0;
 
 //variables for bluetooth
@@ -69,7 +70,7 @@ int bt_broadcasting = 0;
 int audio_time_elapsed = 0;
 int audio_test_time = 10;
 uint16_t audio_frequency[5] = {500, 1000, 1500, 2500, 5000};
-int audio_delay[] = {0, 240, 480, 720}; 
+int audio_delay[] = {0, 240, 480, 720};
 int audio_pattern_count = 0;
 int audio_pattern[5][4] = {{250, 250, 250, 250}, {500, 500, 500, 500}, {250, 250, 250, 0}, {500, 500, 0, 0}, {300, 100, 300, 100}};
 int audio_timeout = 0;
@@ -77,6 +78,11 @@ int audio_timeout = 0;
 //variables to use usb serial debugging (115200 baud)
 char debug_command = 0;
 char debug_output[255];
+
+//Low Power Instantiation
+TEENSY3_LP LP = TEENSY3_LP();
+HardwareSerial_LP SR_LP = HardwareSerial_LP();
+int cpu_err = 0;
 
 int main(void){
 
@@ -89,6 +95,9 @@ int main(void){
 
 	//perform start up
 	bluetooth_init();
+
+
+
 	motion_init();
 	motion_calibrate();
 	tone_init();
@@ -99,7 +108,7 @@ int main(void){
 	bluetooth_update();
 
 	//TODO: implement bluetooth whitleist
-	
+
 
 	for(;;){
 		//poll bluetooth every so often
@@ -110,21 +119,25 @@ int main(void){
 			sound_sel = bt_sound_select;
 			sound_delay = bt_sound_delay;
 			sound_test = bt_sound_test;
-			
+
 			bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
 			bt_new_data = 0;
 		}
 
 		//state machine
 		switch(state){
-		
+
 			case STATE_DISARMING:
 				simplePrint("DISARMING\n");
-  
+
 				//turn everything off
 				gps_end();
 				gsm_end();
 				tone_end();
+				bluetooth_end();
+				//Test fill in for LP bluetooth_init()
+				cpu_err = LP.CPU(TWO_MHZ);
+				SR_LP.begin(38400, SERIAL_8N1);
 
 				//reset text lock
 				text_lock = 5;
@@ -133,18 +146,18 @@ int main(void){
 				audio_time_elapsed = 0;
 				audio_timeout = 0;
 				alarmed = '0';
-				
+
 				//reset sound test variables
 				sound_test = '0';
 				audio_test_time = 10;
 				bluetooth_write(sound_test, armed, sound, sound_sel, sound_delay);
 				state = STATE_DISARMED;
 			break;
-				
+
 			case STATE_DISARMED:
 				simplePrint("DISARMED\n");
 				if(armed == '1'){state = STATE_ARMING;}
-				
+
 				if(sound_test == '1'){
 					simplePrint("TESTING SOUND: ");
 					usb_serial_putchar(sound_sel);
@@ -166,11 +179,14 @@ int main(void){
 				delay(250);
 
 			break;
-			
+
 			case STATE_ARMING:
+				SR_LP.end();
+				cpu_err = LP.CPU(F_CPU);
 				simplePrint("ARMING\n");
 				tone_end();
 				motion_arm_position();
+				bluetooth_init();
 
 				//turn on big boys
 				gps_init();
@@ -179,7 +195,7 @@ int main(void){
 				audio_time_elapsed = 0;
 				audio_timeout = 0;
 				alarmed = '0';
-				
+
 				//reset sound test variables
 				sound_test = '0';
 				audio_test_time = 10;
@@ -187,7 +203,7 @@ int main(void){
 
 				state = STATE_ARMED;
 			break;
-			
+
 			case STATE_ARMED:
 				simplePrint("ARMED\n");
 
@@ -203,7 +219,7 @@ int main(void){
 						for(gps_index=0;gps_index<8;gps_index++){ gps_loc.lon_min[gps_index] = gps_temp.lon_min[gps_index];}
 						simplePrint("valid location - ");
 					}else if(gps_ret < 0){
-						gps_lock = 0;	
+						gps_lock = 0;
 						simplePrint("invalid - ");
 					}
 
@@ -212,10 +228,10 @@ int main(void){
 						simplePrint("GPS locked and sleeping\n");
 					}
 				}
-				
+
 				//TODO: timer (with int)
 				delay(250);
-				
+
 				//poll the motion sensor every .25 s
 				motion_redundancy[motion_index] = motion_update();
 				motion_index++;
@@ -234,31 +250,31 @@ int main(void){
 				if(alarmed == '1'){
 					state = STATE_ALARMING;
 				}
-				
+
 				if(armed == '0'){state = STATE_DISARMING;}
 			break;
-			
+
 			case STATE_ALARMING:
 				simplePrint("ALARMING\n");
 
 				//fire up wireless modules
 				gsm_did_init = gsm_init(0);
 				gps_wake();
-				
+
 				if(gsm_did_init != 1){
 					simplePrint("ERROR - GSM did not init. Have a nice day.\n");
 				}
 				delay(2000);
 				gps_pack_message(gsm_message, &gps_loc, alarmed);
 				gsm_send_sms(SECRET_NUMBER, gsm_message);
-				
+
 				state = STATE_ALARMED;
-				
+
 			break;
-			
+
 			case STATE_ALARMED:
 				simplePrint("ALARMED\n");
-				
+
 				//get GPS data
 				gps_ret = gps_parse(&gps_temp);
 				if(gps_ret == 1){
@@ -273,12 +289,12 @@ int main(void){
 					for(gps_index=0;gps_index<6;gps_index++){ gps_loc.vel[gps_index] = gps_temp.vel[gps_index];}
 					simplePrint("valid velocity - ");
 				}else if(gps_ret < 0){
-					gps_lock = 0;	
+					gps_lock = 0;
 					simplePrint("invalid - ");
 				}
 
-				//send GSM data every 2 min 
-				if(gsm_counter >= 480){ 
+				//send GSM data every 2 min
+				if(gsm_counter >= 480){
 					simplePrint("I'll be texting you shortly; ");
 					//if data is valid, cleverly and secretly pack the message
 					//TODO: put in timeout
@@ -288,7 +304,7 @@ int main(void){
 						simplePrint(gps_loc.lon);
 						simplePrint(gps_loc.lon_min);
 						simplePrint(gps_loc.vel);
-						
+
 						gps_pack_message(gsm_message, &gps_loc, alarmed);
 						simplePrint("packed you a secret message.\n");
 						simplePrint(gsm_message);
@@ -321,29 +337,29 @@ int main(void){
 						audio_time_elapsed++;
 					}
 				}
-				
+
 				if(armed == '0'){state = STATE_DISARMING;}
 
 				//TODO: sleep. BUT don't remove delay til then!
 				//otherwise we use all our texts up super fast
 				delay(250);
-				
+
 			break;
-			
+
 			default:
 				simplePrint("ERROR - INCORRECT STATE\n");
 		}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-		
-	
+
+
+
+
+
+
+
+
+
+
+
 	//THIS IS MY MANUAL DEBUG CODE
 		if(usb_serial_available()){
 			debug_command = usb_serial_getchar();
@@ -353,13 +369,13 @@ int main(void){
 		digitalWriteFast(LED_BUILTIN, LOW);
 		delay(30);
 		digitalWriteFast(LED_BUILTIN, HIGH);
-		
+
 		if(debug_command == 'b'){
 			simplePrint("Setting up Bluetooth.../n");
 			bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
 			debug_command = 0;
 		}
-		
+
 		*/
 
 		if(debug_command == 't'){
@@ -385,6 +401,6 @@ int main(void){
 			debug_command = 0;
 		}
 	}
-	
+
 	return(0);
 }

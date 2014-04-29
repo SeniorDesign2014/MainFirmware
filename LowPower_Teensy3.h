@@ -30,9 +30,9 @@
 #ifndef LowPower_Teensy3
 #define LowPower_Teensy3
 #include "Arduino.h"
-#include "utility/mk20dx128_ext.h"
-#include "utility/t3core2lp.h"
-#include "utility/module.h"
+#include "mk20dx128_ext.h"
+#include "t3core2lp.h"
+#include "module.h"
 
 /* Define LLS & VLLS Wakeup Pin */
 #define PIN_2          0x1000

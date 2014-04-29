@@ -9,7 +9,7 @@ Author: Paul Burris
  #ifdef __cplusplus
  extern "C" {
  #endif
- 
+
 #define BT_NON_DISCOVERABLE 0
 #define BT_LIMITED_DISCOVERABLE 1 //lower power, I think
 #define BT_GENERAL_DISCOVERABLE 2 //recommended
@@ -50,6 +50,8 @@ void bluetooth_write(char handshake, char arm_disarm, char sound_on_off, char so
 void bluetooth_whitelist_append(char* device_address, char address_type);
 
 void bluetooth_reset(void);
+
+void bluetooth_end(void);
 
  #ifdef __cplusplus
  }
