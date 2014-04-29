@@ -14,6 +14,7 @@ Author: Paul Burris
 #define BT_WHITELIST_BUF_SIZE 12
 #define BT_SET_MODE_BUF_SIZE 7
 #define BT_RESET_BUF_SIZE 6
+#define BT_SET_ADV_PARAM_SIZE 10
 
 #define USB_DEBUG
 
@@ -21,6 +22,7 @@ char bt_write_flag = 0;
 char bt_whitelist_flag = 0;
 char bt_set_mode_flag = 0;
 char bt_connected_flag = 0;
+char bt_set_adv_parameters_flag = 0;
 char bt_armed = '0';
 char bt_sound = '0';
 char bt_sound_select = '0';
@@ -32,13 +34,18 @@ char bt_serial_out[] = {0x0D, 0x00, 0x09, 0x02, 0x00, 0x14, 0x00, 0x00, 0x05, 0x
 char bt_whitelist_append[] = {0x0B , 0x00, 0x07, 0x00, 0x0A, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
 char bt_set_mode[] = {0x06, 0x00, 0x02, 0x06, 0x01, 0x02, 0x02};
 char bt_reset[] = {0x05, 0x00, 0x01, 0x00, 0x00, 0x00};
+char bt_set_adv_parameters[] = {0x09, 0x00, 0x05, 0x06, 0x08, 0x06, 0x40, 0x06, 0x60, 0x04};
 
+//this is for debugging
 void simplePrint(char* S){
 	while(*S){
 		usb_serial_putchar(*S++);
 	}
 }
 
+/************************************************************
+Init sets up the serial port and pulls up the reset_n pin.
+***********************************************************/
 void bluetooth_init(){
 	serial_begin(BAUD2DIV(38400));
 	serial_format(SERIAL_8N1);
@@ -49,7 +56,10 @@ void bluetooth_init(){
 
 	//TODO: implement whitelist
 }
-/* Write Attribute*/
+
+/********************************************************************
+ Write Attribute updates the attributes that are exposed to the app.
+********************************************************************/
 void bluetooth_write(char handshake, char arm_disarm, char sound_on_off, char sound_sel, char sound_delay){
 	bt_serial_out[9] = handshake;
 	bt_serial_out[10] = arm_disarm;
@@ -60,6 +70,9 @@ void bluetooth_write(char handshake, char arm_disarm, char sound_on_off, char so
 	serial_write(bt_serial_out, BT_WRITE_BUF_SIZE);
 }
 
+/********************************************************
+Set mode, starts the bluetooth advertisement.
+********************************************************/
 void bluetooth_set_mode(char discover, char connect){
 	bt_set_mode[5] = discover;
 	bt_set_mode[6] = connect;
@@ -67,6 +80,9 @@ void bluetooth_set_mode(char discover, char connect){
 	serial_write(bt_set_mode, BT_SET_MODE_BUF_SIZE);
 }
 
+/***************************************************************
+Whitelist append adds a device to the whitelist
+***************************************************************/
 void bluetooth_whitelist_append(char* device_address, char address_type){
 	int i;
 	for(i=0; i<6; i++){
@@ -77,11 +93,29 @@ void bluetooth_whitelist_append(char* device_address, char address_type){
 	serial_write(bt_whitelist_append, BT_WHITELIST_BUF_SIZE);
 }
 
+/****************************************************************
+Reset is a software reset for the module if passed 0, hardware if passed 1.
+TODO: MAKE THIS HAPPEN
+****************************************************************/
 void bluetooth_reset(void){
 //	serial_write(bt_reset, BT_RESET_BUF_SIZE);
 	digitalWriteFast(2, LOW);
-	delay(3);
+	delay(30);
 	digitalWriteFast(2, HIGH);
+}
+
+/**********************************************************
+Set Adv Parameters sets up how often the bluetooth advertises 
+and on which channels.
+**********************************************************/
+void bluetooth_set_adv_parameters(uint16_t min, uint16_t max, uint8_t channel_selector){
+	bt_set_adv_parameters[5] = (min & 0xff);
+	bt_set_adv_parameters[6] = (min>>8);
+	bt_set_adv_parameters[7] = (max & 0xff);
+	bt_set_adv_parameters[8] = (max>>8);
+	bt_set_adv_parameters[9] = channel_selector;
+
+	serial_write(bt_set_adv_parameters, BT_SET_ADV_PARAM_SIZE);
 }
 
 /**********************************************************
@@ -143,17 +177,31 @@ void bluetooth_update(){
 					case 0x06: //GAP
 						switch(method){
 							case 0x01: //set mode
-								#ifdef USB_DEBUG
-								simplePrint("Mode Set\n");
-								#endif
 								if((data[0] & data[1]) == 0){
 									bt_set_mode_flag = 1;
+									#ifdef USB_DEBUG
 									simplePrint("Mode Set\n");
+									#endif
 									bluetooth_write('0', '0', '0', '0', '0');
 								}else{
 									bt_set_mode_flag = 0;
+									#ifdef USB_DEBUG
 									simplePrint("Mode NOT Set\n");
+									#endif
 								}
+							break;
+							
+							case 0x08: //set advertisement parameters
+								if((data[0] & data[1]) == 0){
+									bt_set_adv_parameters_flag = 1;
+									#ifdef USB_DEBUG
+									simplePrint("Advertisement Parameters Set\n");
+									#endif
+									bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
+								}else{
+									bt_set_adv_parameters_flag = 0;
+								}
+								
 							break;
 						}
 					break;
@@ -170,8 +218,8 @@ void bluetooth_update(){
 						switch(method){
 							case 0x00: //bootup
 								simplePrint(" Boot!\n");
-								//TODO: fix
-								bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
+								//TODO: put in whitlelist append, then do this
+								bluetooth_set_adv_parameters(BT_ADV_MIN, BT_ADV_MAX, BT_SINGLE_CHANNEL);
 							break;
 						}
 					break;
@@ -179,20 +227,21 @@ void bluetooth_update(){
 					case 0x02: //Data
 						switch(method){
 							case 0x00: //status
-								#ifdef USB_DEBUG
-								simplePrint("New data!\n");
-								#endif
 								bt_new_data = 1;
 								bt_sound_test = data[7];
-								usb_serial_putchar(bt_sound_test);
 								bt_armed = data[8];
-								usb_serial_putchar(bt_armed);
 								bt_sound = data[9];
-								usb_serial_putchar(bt_sound);
 								bt_sound_select = data[10];
-								usb_serial_putchar(bt_sound_select);
 								bt_sound_delay = data[11];
+
+								#ifdef USB_DEBUG
+								simplePrint("New data!\n");
+								usb_serial_putchar(bt_sound_test);
+								usb_serial_putchar(bt_armed);
+								usb_serial_putchar(bt_sound);
+								usb_serial_putchar(bt_sound_select);
 								usb_serial_putchar(bt_sound_delay);
+								#endif
 								
 							break;
 						}
@@ -212,7 +261,8 @@ void bluetooth_update(){
 								#ifdef USB_DEBUG
 								simplePrint("Disconnected\n");
 								#endif
-								bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
+								//bluetooth_set_mode(BT_GENERAL_DISCOVERABLE, BT_UNDIRECTED_CONNECTABLE);
+								bluetooth_set_adv_parameters(BT_ADV_MIN, BT_ADV_MAX, BT_SINGLE_CHANNEL);
 								bt_connected_flag = 0;
 								bt_set_mode_flag = 0;
 							break;

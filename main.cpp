@@ -8,6 +8,8 @@ This is the integrated file.
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
+//#include "LowPower_Teensy3.h"
+#include "module.h"
 #include "mk20dx128.h"
 #include "core_pins.h"
 #include "usb_serial.h"
@@ -78,7 +80,37 @@ int audio_timeout = 0;
 char debug_command = 0;
 char debug_output[255];
 
+//create low power stuff
+//TEENSY3_LP LP = TEENSY3_LP();
+//configSleep* LP_config;
+
+//void callBackHandler(){
+
+//}
+
+void savePower(){
+	adcDisable();
+	cmp0Disable();
+	cmp1Disable();
+	//dmaDisable();
+	i2sDisable();
+	lptmDisable();
+	pdbDisable();
+	spiDisable();
+	rtcDisable();
+	tsiDisable();
+	vrefDisable();
+}
+
 int main(void){
+
+	//set up power variables
+//	LP_config = (configSleep*) calloc(1,sizeof(configSleep));
+//	LP_config->modules = LPTMR_WAKE;
+//	LP_config->lptmr_timeout = 250;
+
+	//shut down thigns we dont need
+	savePower();
 
 	//initialize pin configurations
 	pinMode(LED_BUILTIN, OUTPUT);
@@ -164,6 +196,7 @@ int main(void){
 
 				//TODO: sleep micro
 				delay(250);
+				//LP.Sleep();
 
 			break;
 			

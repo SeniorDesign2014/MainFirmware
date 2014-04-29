@@ -18,6 +18,13 @@ Author: Paul Burris
 #define BT_DIRECTED_CONNECTABLE 1 	//TODO: look into this
 #define BT_UNDIRECTED_CONNECTABLE 2 //recommended
 
+#define BT_ADV_MIN 0x0640
+#define BT_ADV_MAX 0x0660
+
+#define BT_SINGLE_CHANNEL 0x04 //recommended
+#define BT_DOUBLE CHANNEL 0x03
+#define BT_TRIPLE_CHANNEL 0x07
+
 #define BT_CONNECTION_COMPLETE 4
 
 #define ASCII 0x30
@@ -46,9 +53,13 @@ void bluetooth_set_mode(char discover, char connect);
 //This function is used to put up data into the advertised output characteristic
 void bluetooth_write(char handshake, char arm_disarm, char sound_on_off, char sound_sel, char sound_delay);
 
+//Only set parameters while not connected
+void bluetooth_set_adv_parameters(uint16_t min, uint16_t max, uint8_t channel_selector);
+
 //Only append when you are not connected
 void bluetooth_whitelist_append(char* device_address, char address_type);
 
+//This will reset the module
 void bluetooth_reset(void);
 
  #ifdef __cplusplus
