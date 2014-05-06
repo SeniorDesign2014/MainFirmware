@@ -162,7 +162,7 @@ int main(void){
 					simplePrint("TESTING SOUND: ");
 					usb_serial_putchar(sound_sel);
 
-					tone_begin(audio_frequency[sound_sel - ASCII], audio_pattern[sound_sel][audio_pattern_count]);
+					tone_begin(24*audio_frequency[sound_sel - ASCII], audio_pattern[sound_sel][audio_pattern_count]);
 					audio_pattern_count++;
 					if(audio_pattern_count >= 4){ audio_pattern_count = 0;}
 
