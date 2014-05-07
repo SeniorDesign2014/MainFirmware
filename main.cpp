@@ -376,7 +376,6 @@ int main(void){
 			debug_command = 0;
 		}
 
-		*/
 
 		if(debug_command == 't'){
 			sound_test = '1';
@@ -400,6 +399,7 @@ int main(void){
 			}
 			debug_command = 0;
 		}
+		*/
 	}
 
 	return(0);

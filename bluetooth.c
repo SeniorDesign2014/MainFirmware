@@ -149,7 +149,7 @@ void bluetooth_update(){
 								if((data[0] & data[1]) == 0){
 									bt_set_mode_flag = 1;
 									simplePrint("Mode Set\n");
-									bluetooth_write('0', '0', '0', '0', '0');
+									bluetooth_write(bt_sound_test, bt_armed, bt_sound, bt_sound_select, bt_sound_delay);
 								}else{
 									bt_set_mode_flag = 0;
 									simplePrint("Mode NOT Set\n");

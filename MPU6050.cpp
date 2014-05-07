@@ -14,58 +14,58 @@ Based on the example code at https://github.com/big5824/Quadrocopter
 #define gyro_zsensitivity 65.5
 #define a 0.01
 
-signed int ACCEL_XOUT;
-signed int ACCEL_YOUT;
-signed int ACCEL_ZOUT;
-float GYRO_XRATE;
-float GYRO_YRATE;
-float GYRO_ZRATE;
-int GYRO_XRATERAW;
-int GYRO_YRATERAW;
-int GYRO_ZRATERAW;
+signed int ACCEL_XOUT = 0;
+signed int ACCEL_YOUT = 0;
+signed int ACCEL_ZOUT = 0;
+float GYRO_XRATE = 0;
+float GYRO_YRATE = 0;
+float GYRO_ZRATE = 0;
+int GYRO_XRATERAW = 0;
+int GYRO_YRATERAW = 0;
+int GYRO_ZRATERAW = 0;
 
-unsigned char GYRO_XOUT_L;
-unsigned char GYRO_XOUT_H;
-unsigned char GYRO_YOUT_L;
-unsigned char GYRO_YOUT_H;
-unsigned char GYRO_ZOUT_L;
-unsigned char GYRO_ZOUT_H;
-signed int GYRO_XOUT;
-signed int GYRO_YOUT;
-signed int GYRO_ZOUT;	
+unsigned char GYRO_XOUT_L = 0;
+unsigned char GYRO_XOUT_H = 0;
+unsigned char GYRO_YOUT_L = 0;
+unsigned char GYRO_YOUT_H = 0;
+unsigned char GYRO_ZOUT_L = 0;
+unsigned char GYRO_ZOUT_H = 0;
+signed int GYRO_XOUT = 0;
+signed int GYRO_YOUT = 0;
+signed int GYRO_ZOUT = 0;	
 
-unsigned char ACCEL_XOUT_L;
-unsigned char ACCEL_XOUT_H;
-unsigned char ACCEL_YOUT_L;
-unsigned char ACCEL_YOUT_H;
-unsigned char ACCEL_ZOUT_L;
-unsigned char ACCEL_ZOUT_H;
+unsigned char ACCEL_XOUT_L = 0;
+unsigned char ACCEL_XOUT_H = 0;
+unsigned char ACCEL_YOUT_L = 0;
+unsigned char ACCEL_YOUT_H = 0;
+unsigned char ACCEL_ZOUT_L = 0;
+unsigned char ACCEL_ZOUT_H = 0;
 
-signed long GYRO_XOUT_OFFSET_1000SUM;
-signed long GYRO_YOUT_OFFSET_1000SUM;
-signed long GYRO_ZOUT_OFFSET_1000SUM;
-signed long GYRO_XOUT_OFFSET;
-signed long GYRO_YOUT_OFFSET;
-signed long GYRO_ZOUT_OFFSET;
+signed long GYRO_XOUT_OFFSET_1000SUM = 0;
+signed long GYRO_YOUT_OFFSET_1000SUM = 0;
+signed long GYRO_ZOUT_OFFSET_1000SUM = 0;
+signed long GYRO_XOUT_OFFSET = 0;
+signed long GYRO_YOUT_OFFSET = 0;
+signed long GYRO_ZOUT_OFFSET = 0;
 
-float GYRO_XANGLE;
-float GYRO_YANGLE;
-float GYRO_ZANGLE;
-long GYRO_XANGLERAW;
-long GYRO_YANGLERAW;
-long GYRO_ZANGLERAW;
-float ACCEL_XANGLE;
-float ACCEL_YANGLE;
-float ACCEL_ZANGLE;
+float GYRO_XANGLE = 0;
+float GYRO_YANGLE = 0;
+float GYRO_ZANGLE = 0;
+long GYRO_XANGLERAW = 0;
+long GYRO_YANGLERAW = 0;
+long GYRO_ZANGLERAW = 0;
+float ACCEL_XANGLE = 0;
+float ACCEL_YANGLE = 0;
+float ACCEL_ZANGLE = 0;
 
 //these are the variables for preserving the ARMED position
-float ACCEL_XANGLE_ARMED;
-float ACCEL_YANGLE_ARMED;
-float ACCEL_ZANGLE_ARMED;
+float ACCEL_XOUT_ARMED = 0;
+float ACCEL_YOUT_ARMED = 0;
+float ACCEL_ZOUT_ARMED = 0;
 
-float GYRO_XANGLE_ARMED;
-float GYRO_YANGLE_ARMED;
-float GYRO_ZANGLE_ARMED;
+float GYRO_XOUT_ARMED = 0;
+float GYRO_YOUT_ARMED = 0;
+float GYRO_ZOUT_ARMED = 0;
 
 void LDByteWriteI2C(unsigned char ControlByte, unsigned char Address, unsigned char data){
 	
@@ -109,16 +109,16 @@ int motion_init(void){
 
 void motion_arm_position(void){
 	Get_Gyro_Rates();
-	GYRO_XANGLE_ARMED = GYRO_XANGLE;
-	GYRO_YANGLE_ARMED = GYRO_YANGLE;
-	GYRO_ZANGLE_ARMED = GYRO_ZANGLE;
+	GYRO_XOUT_ARMED = GYRO_XOUT;
+	GYRO_YOUT_ARMED = GYRO_YOUT;
+	GYRO_ZOUT_ARMED = GYRO_ZOUT;
 	
 	Get_Accel_Values();
-	Get_Accel_Angles(); // TODO: accel Z angle doesn't currently work
+	Get_Accel_Angles();
 	
-	ACCEL_XANGLE_ARMED = ACCEL_XANGLE;
-	ACCEL_YANGLE_ARMED = ACCEL_YANGLE;
-	ACCEL_ZANGLE_ARMED = ACCEL_ZANGLE;
+	ACCEL_XOUT_ARMED = ACCEL_XANGLE;
+	ACCEL_YOUT_ARMED = ACCEL_YANGLE;
+	ACCEL_ZOUT_ARMED = ACCEL_ZANGLE;
 }
 
 void motion_calibrate(void){
@@ -147,8 +147,8 @@ char motion_update(){
 	//check accelerometer against initial values
 	Get_Accel_Values();
 	Get_Accel_Angles();
-	accelXdiff = ACCEL_XANGLE - ACCEL_XANGLE_ARMED;
-	accelYdiff = ACCEL_YANGLE - ACCEL_YANGLE_ARMED;
+	accelXdiff = ACCEL_XANGLE - ACCEL_XOUT_ARMED;
+	accelYdiff = ACCEL_YANGLE - ACCEL_YOUT_ARMED;
 	//TODO: fix
 	//accelZdiff = ACCEL_ZANGLE - ACCEL_ZANGLE_ARMED;
 	
@@ -159,9 +159,9 @@ char motion_update(){
 	
 	//check gyroscope against initial values
 	Get_Gyro_Rates();
-	gyroXdiff = GYRO_XANGLE - GYRO_XANGLE_ARMED;
-	gyroYdiff = GYRO_YANGLE - GYRO_YANGLE_ARMED;
-	gyroZdiff = GYRO_ZANGLE - GYRO_ZANGLE_ARMED;
+	gyroXdiff = GYRO_XOUT - GYRO_XOUT_ARMED;
+	gyroYdiff = GYRO_YOUT - GYRO_YOUT_ARMED;
+	gyroZdiff = GYRO_ZOUT - GYRO_ZOUT_ARMED;
 	
 	if((fabsf(gyroXdiff) > GYRO_X_TOLERANCE)|| (fabsf(gyroYdiff) > GYRO_Y_TOLERANCE) || (fabsf(gyroZdiff) > GYRO_Z_TOLERANCE)){
 		return('1');	//something gyroscopey is going on
